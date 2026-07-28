@@ -3,190 +3,194 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fromentine Sailing Club — Locations</title>
+  <title>Fromentine Sailing Club — Plage & Locations</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* Optimisation défilement fluide pour mobile */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-3 md:p-8">
-  <div class="max-w-5xl mx-auto space-y-6">
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-2 md:p-6 pb-20">
+  <div class="max-w-5xl mx-auto space-y-4">
     
-    <!-- En-tête -->
-    <header class="bg-blue-600 text-white rounded-xl p-5 shadow-md flex flex-col md:flex-row justify-between items-center gap-4">
-      <div>
-        <h1 class="text-2xl font-bold">Fromentine Sailing Club</h1>
-        <p class="text-blue-100 text-sm">Gestion des réservations en temps réel</p>
+    <!-- En-tête Mobile Compact -->
+    <header class="bg-blue-600 text-white rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-3">
+      <div class="text-center sm:text-left">
+        <h1 class="text-xl font-black tracking-tight">Fromentine Sailing Club</h1>
+        <p class="text-blue-100 text-xs">Gestion & Disponibilités Plage</p>
       </div>
-      <div class="flex gap-4 text-center w-full md:w-auto justify-around">
-        <div class="bg-blue-700 rounded-lg px-4 py-2 flex-1 md:flex-initial">
-          <span class="block text-[10px] uppercase tracking-wide text-blue-200">Réservations</span>
-          <span id="total-count" class="text-xl font-bold">0</span>
+      <div class="flex gap-2 w-full sm:w-auto text-center">
+        <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
+          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Résa(s)</span>
+          <span id="total-count" class="text-lg font-black">0</span>
         </div>
-        <div class="bg-blue-700 rounded-lg px-4 py-2 flex-1 md:flex-initial">
-          <span class="block text-[10px] uppercase tracking-wide text-blue-200">Recettes Est.</span>
-          <span id="total-revenue" class="text-xl font-bold">0 €</span>
+        <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
+          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Recettes</span>
+          <span id="total-revenue" class="text-lg font-black">0 €</span>
         </div>
       </div>
     </header>
 
-    <!-- Navigation Onglets -->
-    <div class="flex border-b border-slate-300">
-      <button id="tab-day-btn" onclick="switchView('day')" class="py-2 px-4 font-bold border-b-2 border-blue-600 text-blue-600 text-sm">Vue Journée</button>
-      <button id="tab-week-btn" onclick="switchView('week')" class="py-2 px-4 font-semibold text-slate-500 hover:text-slate-700 text-sm">Planning Semaine</button>
-    </div>
+    <!-- Barres d'onglets ergonomiques -->
+    <nav class="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200 overflow-x-auto no-scrollbar gap-1 text-xs font-bold">
+      <button id="tab-day-btn" onclick="switchView('day')" class="flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white whitespace-nowrap transition-all text-center">➕ Réservation / Jour</button>
+      <button id="tab-grid-btn" onclick="switchView('grid')" class="flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center">📊 Dispo / Créneaux</button>
+      <button id="tab-week-btn" onclick="switchView('week')" class="flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center">📅 Dispo / Semaine</button>
+    </nav>
 
-    <!-- Filtres & Sélection -->
-    <section id="day-filters" class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center justify-between">
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <label for="filter-date" class="font-semibold text-slate-700 text-sm">Date :</label>
-        <input type="date" id="filter-date" class="border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto">
-      </div>
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <label for="filter-slot" class="font-semibold text-slate-700 text-sm">Créneau (1h) :</label>
-        <select id="filter-slot" class="border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto"></select>
-      </div>
+    <!-- Bar de Filtre Date Unique -->
+    <section class="bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex items-center justify-between gap-3">
+      <label for="filter-date" class="font-bold text-slate-700 text-xs uppercase tracking-wider">Date choisie :</label>
+      <input type="date" id="filter-date" class="border-2 border-blue-500 rounded-lg p-2 text-sm font-bold text-blue-900 bg-blue-50 focus:outline-none flex-1 max-w-[200px]">
     </section>
 
-    <!-- VUE JOURNÉE -->
-    <div id="view-day" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- VUE 1 : CRÉATION & LISTE DU JOUR -->
+    <div id="view-day" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       
-      <!-- Formulaire d'ajout -->
-      <section class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 lg:col-span-1 space-y-4">
-        <h2 class="text-lg font-bold text-slate-700">Nouvelle Réservation</h2>
-        <form id="booking-form" class="space-y-4">
+      <!-- Formulaire -->
+      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 lg:col-span-1 space-y-3">
+        <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
+          <span class="w-2 h-4 bg-blue-600 rounded-full inline-block"></span> Nouvelle Réservation
+        </h2>
+        <form id="booking-form" class="space-y-3">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Nom du responsable *</label>
-            <input type="text" id="client-name" placeholder="ex: Jean Dupont" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Créneau horaire *</label>
+            <select id="form-slot" class="w-full border-2 border-slate-200 rounded-xl p-2.5 text-sm font-bold bg-slate-50 focus:border-blue-500 outline-none"></select>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nom du responsable *</label>
+            <input type="text" id="client-name" placeholder="ex: Jean Dupont" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-[11px] font-semibold text-slate-500 mb-1">Téléphone client</label>
-              <input type="tel" id="client-phone" placeholder="06 12 34 56 78" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+              <label class="block text-[10px] font-bold text-slate-500 mb-1">Téléphone</label>
+              <input type="tel" id="client-phone" placeholder="06.." class="w-full border border-slate-300 rounded-lg p-2 text-xs outline-none">
             </div>
             <div>
-              <label class="block text-[11px] font-semibold text-slate-500 mb-1">Prénoms pratiquants</label>
-              <input type="text" id="users-names" placeholder="ex: Paul, Luc..." class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+              <label class="block text-[10px] font-bold text-slate-500 mb-1">Pratiquants</label>
+              <input type="text" id="users-names" placeholder="Paul, Luc.." class="w-full border border-slate-300 rounded-lg p-2 text-xs outline-none">
             </div>
           </div>
 
-          <div class="bg-amber-50 p-2.5 rounded-lg border border-amber-200">
-            <label class="block text-[11px] font-bold text-amber-800 mb-1">Contact d'Urgence (Optionnel)</label>
-            <input type="text" id="emergency-contact" placeholder="Nom + N° Téléphone urgence" class="w-full border border-amber-300 rounded p-1.5 text-xs bg-white focus:ring-2 focus:ring-amber-500 outline-none">
+          <div class="bg-amber-50/80 p-2.5 rounded-xl border border-amber-200">
+            <label class="block text-[10px] font-bold text-amber-900 mb-1">🚨 Contact Urgence (Optionnel)</label>
+            <input type="text" id="emergency-contact" placeholder="Nom + Téléphone" class="w-full border border-amber-300 rounded-lg p-1.5 text-xs bg-white outline-none">
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-2">Matériels à réserver :</label>
-            <div id="equipment-selection" class="space-y-3 bg-slate-50 p-3 rounded-lg border border-slate-200"></div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1.5">Matériels à louer :</label>
+            <div id="equipment-selection" class="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200"></div>
           </div>
 
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Statut Paiement</label>
-            <select id="payment-status" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-              <option value="Payé">Payé</option>
-              <option value="En attente">En attente</option>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Statut Paiement</label>
+            <select id="payment-status" class="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold bg-white">
+              <option value="Payé">✅ Payé</option>
+              <option value="En attente">⏳ En attente</option>
             </select>
           </div>
 
-          <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors text-sm shadow">
+          <button type="submit" class="w-full bg-blue-600 active:bg-blue-700 text-white font-black py-3 rounded-xl transition-all text-sm shadow-md uppercase tracking-wider">
             Valider la réservation
           </button>
         </form>
       </section>
 
-      <!-- Stocks & Planning -->
-      <div class="lg:col-span-2 space-y-6">
-        <section class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-          <h2 class="text-xs font-bold uppercase text-slate-400 mb-3 tracking-wider">Disponibilités sur ce créneau</h2>
-          <div id="stock-cards" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
-        </section>
+      <!-- Liste des Réservations -->
+      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 lg:col-span-2">
+        <h2 class="text-base font-black text-slate-800 mb-3 flex items-center gap-2">
+          <span class="w-2 h-4 bg-emerald-500 rounded-full inline-block"></span> Planning du Jour
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">
+              <tr>
+                <th class="py-2 px-2">Heure</th>
+                <th class="py-2 px-2">Client / Contact</th>
+                <th class="py-2 px-2">Matériel</th>
+                <th class="py-2 px-2">Prix</th>
+                <th class="py-2 px-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-table" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
 
-        <section class="bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-          <h2 class="text-lg font-bold mb-4 text-slate-700">Planning du jour</h2>
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-sm text-slate-600">
-              <thead class="bg-slate-50 text-slate-400 text-xs uppercase border-b border-slate-200">
-                <tr>
-                  <th class="py-2 px-3">Créneau</th>
-                  <th class="py-2 px-3">Client / Contact</th>
-                  <th class="py-2 px-3">Équipements</th>
-                  <th class="py-2 px-3">Prix</th>
-                  <th class="py-2 px-3">Statut</th>
-                  <th class="py-2 px-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody id="bookings-table" class="divide-y divide-slate-100"></tbody>
-            </table>
-          </div>
-        </section>
+    <!-- VUE 2 : GRILLE DES DISPONIBILITÉS PAR CRÉNEAUX (JOURNÉE) -->
+    <div id="view-grid" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h2 class="text-base font-black text-slate-800">Disponibilités Heure par Heure</h2>
+        <span class="text-[10px] font-bold text-slate-400">Vert = Dispo • Rouge = Complet</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-center text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-100 text-slate-700 font-bold text-[11px]">
+              <th class="p-2 text-left border">Créneau</th>
+              <th class="p-2 border">Windsurf (2)</th>
+              <th class="p-2 border">K. Double (2)</th>
+              <th class="p-2 border">K. Simple (1)</th>
+              <th class="p-2 border">Paddle (5)</th>
+              <th class="p-2 border">Rescue (1)</th>
+            </tr>
+          </thead>
+          <tbody id="grid-dispo-table" class="divide-y divide-slate-200 font-medium"></tbody>
+        </table>
       </div>
     </div>
 
-    <!-- VUE SEMAINE -->
-    <div id="view-week" class="hidden bg-white rounded-xl p-5 shadow-sm border border-slate-200">
-      <h2 class="text-lg font-bold text-slate-700 mb-4">Aperçu du Planning de la Semaine</h2>
-      <div id="week-container" class="space-y-4"></div>
+    <!-- VUE 3 : VUE SEMAINE GLOBAL -->
+    <div id="view-week" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
+      <h2 class="text-base font-black text-slate-800 border-b pb-2">Vue Semainier des Disponibilités</h2>
+      <div id="week-container" class="space-y-3"></div>
     </div>
 
   </div>
 
-  <!-- MODAL DE MODIFICATION DE RÉSERVATION -->
-  <div id="edit-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
-      <div class="flex justify-between items-center border-b pb-3">
-        <h3 class="text-lg font-bold text-slate-800">Modifier la Réservation</h3>
-        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+  <!-- MODAL EDIT -->
+  <div id="edit-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl max-h-[90vh] overflow-y-auto space-y-3">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-base font-bold text-slate-800">Modifier la Réservation</h3>
+        <button onclick="closeEditModal()" class="text-slate-400 font-black text-2xl">&times;</button>
       </div>
-      
-      <form id="edit-form" class="space-y-4">
+      <form id="edit-form" class="space-y-3">
         <input type="hidden" id="edit-id">
-
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Créneau horaire</label>
-          <select id="edit-slot" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></select>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Créneau</label>
+          <select id="edit-slot" class="w-full border rounded-xl p-2 text-xs font-bold bg-slate-50"></select>
         </div>
-
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Nom du responsable *</label>
-          <input type="text" id="edit-client-name" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Responsable</label>
+          <input type="text" id="edit-client-name" class="w-full border rounded-xl p-2 text-xs font-bold" required>
         </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Téléphone client</label>
-            <input type="tel" id="edit-client-phone" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
-          </div>
-          <div>
-            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Prénoms pratiquants</label>
-            <input type="text" id="edit-users-names" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
-          </div>
+        <div class="grid grid-cols-2 gap-2">
+          <input type="tel" id="edit-client-phone" placeholder="Tél" class="border rounded-lg p-2 text-xs">
+          <input type="text" id="edit-users-names" placeholder="Pratiquants" class="border rounded-lg p-2 text-xs">
         </div>
-
-        <div class="bg-amber-50 p-2 rounded-lg border border-amber-200">
-          <label class="block text-[11px] font-bold text-amber-800 mb-1">Contact d'Urgence</label>
-          <input type="text" id="edit-emergency-contact" class="w-full border border-amber-300 rounded p-1.5 text-xs bg-white focus:ring-2 focus:ring-amber-500 outline-none">
-        </div>
-
+        <input type="text" id="edit-emergency-contact" placeholder="Contact Urgence" class="w-full border border-amber-300 rounded-lg p-2 text-xs bg-amber-50">
         <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-2">Quantités d'équipements :</label>
-          <div id="edit-equipment-selection" class="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200"></div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Quantités</label>
+          <div id="edit-equipment-selection" class="space-y-1 bg-slate-50 p-2 rounded-xl border"></div>
         </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-600 mb-1">Statut Paiement</label>
-          <select id="edit-payment-status" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
-            <option value="Payé">Payé</option>
-            <option value="En attente">En attente</option>
-          </select>
-        </div>
-
+        <select id="edit-payment-status" class="w-full border rounded-xl p-2 text-xs font-bold">
+          <option value="Payé">Payé</option>
+          <option value="En attente">En attente</option>
+        </select>
         <div class="flex gap-2 pt-2">
-          <button type="button" onclick="closeEditModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-lg text-sm">Annuler</button>
-          <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm shadow">Enregistrer</button>
+          <button type="button" onclick="closeEditModal()" class="w-1/2 bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">Annuler</button>
+          <button type="submit" class="w-1/2 bg-blue-600 text-white font-bold py-2 rounded-xl text-xs shadow">Enregistrer</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Intégration Firebase -->
+  <!-- Firebase Integration -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -224,7 +228,7 @@
     let bookings = [];
 
     const dateInput = document.getElementById('filter-date');
-    const slotSelect = document.getElementById('filter-slot');
+    const formSlotSelect = document.getElementById('form-slot');
     const editSlotSelect = document.getElementById('edit-slot');
     const form = document.getElementById('booking-form');
     const editForm = document.getElementById('edit-form');
@@ -232,9 +236,9 @@
     const editEqContainer = document.getElementById('edit-equipment-selection');
 
     dateInput.value = new Date().toISOString().split('T')[0];
-    
+
     SLOTS.forEach(slot => {
-      slotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
+      formSlotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
       editSlotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
     });
 
@@ -244,21 +248,21 @@
         optionsHtml += `<option value="${i}">${i}</option>`;
       }
       eqContainer.innerHTML += `
-        <div class="flex justify-between items-center text-xs bg-white p-2 rounded border border-slate-200">
+        <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border border-slate-200">
           <div>
             <span class="font-bold text-slate-800 block">${INVENTORY[key].name}</span>
             <span class="text-slate-400 text-[10px]">${INVENTORY[key].price}€/h</span>
           </div>
-          <select id="qty-${key}" class="border border-slate-300 rounded px-3 py-1.5 font-bold text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500 outline-none">
+          <select id="qty-${key}" class="border border-slate-300 rounded-lg px-3 py-1 font-black text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500">
             ${optionsHtml}
           </select>
         </div>
       `;
 
       editEqContainer.innerHTML += `
-        <div class="flex justify-between items-center text-xs bg-white p-2 rounded border border-slate-200">
+        <div class="flex justify-between items-center text-xs bg-white p-1.5 rounded border">
           <span class="font-bold text-slate-800">${INVENTORY[key].name}</span>
-          <select id="edit-qty-${key}" class="border border-slate-300 rounded px-3 py-1 font-bold text-sm bg-slate-50">
+          <select id="edit-qty-${key}" class="border rounded px-2 py-0.5 font-bold text-xs bg-slate-50">
             ${optionsHtml}
           </select>
         </div>
@@ -270,7 +274,7 @@
       snapshot.forEach(docSnap => {
         bookings.push({ id: docSnap.id, ...docSnap.data() });
       });
-      render();
+      renderAll();
     });
 
     function getAvailableStock(date, slot, itemKey, excludeBookingId = null) {
@@ -287,34 +291,63 @@
 
     window.switchView = function(view) {
       const dayView = document.getElementById('view-day');
+      const gridView = document.getElementById('view-grid');
       const weekView = document.getElementById('view-week');
-      const dayFilters = document.getElementById('day-filters');
+
       const btnDay = document.getElementById('tab-day-btn');
+      const btnGrid = document.getElementById('tab-grid-btn');
       const btnWeek = document.getElementById('tab-week-btn');
+
+      dayView.classList.add('hidden');
+      gridView.classList.add('hidden');
+      weekView.classList.add('hidden');
+
+      btnDay.className = "flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center";
+      btnGrid.className = "flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center";
+      btnWeek.className = "flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center";
 
       if (view === 'day') {
         dayView.classList.remove('hidden');
-        dayFilters.classList.remove('hidden');
-        weekView.classList.add('hidden');
-        btnDay.className = "py-2 px-4 font-bold border-b-2 border-blue-600 text-blue-600 text-sm";
-        btnWeek.className = "py-2 px-4 font-semibold text-slate-500 hover:text-slate-700 text-sm";
+        btnDay.className = "flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white font-bold whitespace-nowrap transition-all text-center shadow-sm";
+      } else if (view === 'grid') {
+        gridView.classList.remove('hidden');
+        btnGrid.className = "flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white font-bold whitespace-nowrap transition-all text-center shadow-sm";
+        renderGrid();
       } else {
-        dayView.classList.add('hidden');
-        dayFilters.classList.add('hidden');
         weekView.classList.remove('hidden');
-        btnWeek.className = "py-2 px-4 font-bold border-b-2 border-blue-600 text-blue-600 text-sm";
-        btnDay.className = "py-2 px-4 font-semibold text-slate-500 hover:text-slate-700 text-sm";
+        btnWeek.className = "flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white font-bold whitespace-nowrap transition-all text-center shadow-sm";
         renderWeek();
       }
     };
+
+    function renderGrid() {
+      const selectedDate = dateInput.value;
+      const gridTable = document.getElementById('grid-dispo-table');
+      gridTable.innerHTML = '';
+
+      SLOTS.forEach(slot => {
+        let rowHtml = `<tr><td class="p-2 border font-bold text-slate-700 bg-slate-50 text-[11px]">${slot}</td>`;
+        
+        Object.keys(INVENTORY).forEach(key => {
+          const avail = getAvailableStock(selectedDate, slot, key);
+          const max = INVENTORY[key].max;
+          let colorClass = "bg-emerald-100 text-emerald-800 font-bold";
+          if (avail === 0) colorClass = "bg-red-100 text-red-700 font-bold";
+          else if (avail < max) colorClass = "bg-amber-100 text-amber-800 font-bold";
+
+          rowHtml += `<td class="p-2 border ${colorClass} text-xs">${avail} / ${max}</td>`;
+        });
+
+        rowHtml += `</tr>`;
+        gridTable.innerHTML += rowHtml;
+      });
+    }
 
     function renderWeek() {
       const weekContainer = document.getElementById('week-container');
       weekContainer.innerHTML = '';
 
       let curr = new Date(dateInput.value);
-      let weekDays = [];
-      
       let day = curr.getDay();
       let diff = curr.getDate() - day + (day === 0 ? -6 : 1);
       let monday = new Date(curr.setDate(diff));
@@ -322,25 +355,23 @@
       for (let i = 0; i < 7; i++) {
         let d = new Date(monday);
         d.setDate(monday.getDate() + i);
-        weekDays.push(d.toISOString().split('T')[0]);
-      }
+        let dateStr = d.toISOString().split('T')[0];
 
-      weekDays.forEach(dateStr => {
         const dayBookings = bookings.filter(b => b.date === dateStr);
-        const dayLabel = new Date(dateStr).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
+        const dayLabel = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
 
         let dayHtml = `
-          <div class="border border-slate-200 rounded-lg p-3 bg-slate-50">
-            <div class="flex justify-between items-center mb-2 border-b border-slate-200 pb-1">
-              <h3 class="font-bold capitalize text-sm text-blue-700">${dayLabel}</h3>
-              <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2 py-0.5 rounded-full">${dayBookings.length} résa(s)</span>
+          <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+            <div class="flex justify-between items-center border-b pb-1.5 mb-2">
+              <h3 class="font-black capitalize text-xs text-blue-700">${dayLabel}</h3>
+              <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">${dayBookings.length} résa(s)</span>
             </div>
         `;
 
         if (dayBookings.length === 0) {
-          dayHtml += `<p class="text-xs text-slate-400 italic">Aucune réservation</p>`;
+          dayHtml += `<p class="text-[11px] text-slate-400 italic">Aucune réservation</p>`;
         } else {
-          dayHtml += `<div class="space-y-1.5">`;
+          dayHtml += `<div class="space-y-1">`;
           dayBookings.forEach(b => {
             let itemsSummary = [];
             if (b.items) {
@@ -349,12 +380,12 @@
               });
             }
             dayHtml += `
-              <div class="bg-white p-2 rounded border border-slate-200 text-xs flex justify-between items-center">
+              <div class="bg-white p-2 rounded-lg border text-xs flex justify-between items-center shadow-2xs">
                 <div>
-                  <span class="font-bold text-slate-700">${b.slot}</span> — <span class="font-semibold">${b.client}</span>
-                  <div class="text-[11px] text-slate-500">${itemsSummary.join(', ')}</div>
+                  <span class="font-bold text-slate-800">${b.slot}</span> — <span class="font-semibold">${b.client}</span>
+                  <div class="text-[10px] text-slate-500">${itemsSummary.join(', ')}</div>
                 </div>
-                <span class="font-bold text-emerald-600">${b.totalPrice}€</span>
+                <span class="font-black text-emerald-600">${b.totalPrice}€</span>
               </div>
             `;
           });
@@ -363,29 +394,11 @@
 
         dayHtml += `</div>`;
         weekContainer.innerHTML += dayHtml;
-      });
+      }
     }
 
-    function render() {
+    function renderAll() {
       const selectedDate = dateInput.value;
-      const selectedSlot = slotSelect.value;
-
-      // Cartes Disponibilités
-      const stockCards = document.getElementById('stock-cards');
-      stockCards.innerHTML = '';
-      Object.keys(INVENTORY).forEach(key => {
-        const avail = getAvailableStock(selectedDate, selectedSlot, key);
-        const max = INVENTORY[key].max;
-        stockCards.innerHTML += `
-          <div class="border border-slate-200 rounded-lg p-3 text-center bg-slate-50">
-            <span class="block text-xs font-semibold text-slate-500">${INVENTORY[key].name}</span>
-            <span class="text-lg font-bold ${avail <= 0 ? 'text-red-500' : 'text-emerald-600'}">${avail} / ${max}</span>
-            <span class="block text-[10px] text-slate-400">dispo</span>
-          </div>
-        `;
-      });
-
-      // Tableau du jour
       const table = document.getElementById('bookings-table');
       table.innerHTML = '';
       const dayBookings = bookings.filter(b => b.date === selectedDate);
@@ -393,7 +406,6 @@
       let totalRev = 0;
       dayBookings.forEach((b) => {
         totalRev += b.totalPrice;
-        
         let itemsSummary = [];
         if (b.items) {
           Object.keys(b.items).forEach(k => {
@@ -403,21 +415,18 @@
 
         table.innerHTML += `
           <tr>
-            <td class="py-2.5 px-3 text-xs font-semibold">${b.slot}</td>
-            <td class="py-2.5 px-3">
-              <div class="font-medium text-slate-800">${b.client}</div>
-              ${b.phone ? `<a href="tel:${b.phone}" class="text-[11px] text-blue-600 underline block">📞 ${b.phone}</a>` : ''}
-              ${b.usersNames ? `<div class="text-[10px] text-slate-500">Pratiquants: ${b.usersNames}</div>` : ''}
-              ${b.emergency ? `<div class="text-[10px] text-red-600 font-semibold">🚨 Urgence: ${b.emergency}</div>` : ''}
+            <td class="py-2 px-2 font-bold text-[11px] text-blue-900">${b.slot}</td>
+            <td class="py-2 px-2">
+              <div class="font-bold text-slate-800">${b.client}</div>
+              ${b.phone ? `<a href="tel:${b.phone}" class="text-[10px] text-blue-600 font-bold block">📞 ${b.phone}</a>` : ''}
+              ${b.usersNames ? `<div class="text-[9px] text-slate-500">Pratiquants: ${b.usersNames}</div>` : ''}
+              ${b.emergency ? `<div class="text-[9px] text-red-600 font-bold">🚨 Urgence: ${b.emergency}</div>` : ''}
             </td>
-            <td class="py-2.5 px-3 text-xs">${itemsSummary.join(', ')}</td>
-            <td class="py-2.5 px-3 font-bold text-slate-700">${b.totalPrice} €</td>
-            <td class="py-2.5 px-3">
-              <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${b.status === 'Payé' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${b.status}</span>
-            </td>
-            <td class="py-2.5 px-3 text-right space-x-2">
-              <button data-id="${b.id}" class="edit-btn text-blue-600 hover:text-blue-800 text-xs font-bold">Modifier</button>
-              <button data-id="${b.id}" class="delete-btn text-red-500 hover:text-red-700 text-xs font-bold">Supprimer</button>
+            <td class="py-2 px-2 text-[11px] font-medium">${itemsSummary.join(', ')}</td>
+            <td class="py-2 px-2 font-black text-slate-700">${b.totalPrice} €</td>
+            <td class="py-2 px-2 text-right space-x-1">
+              <button data-id="${b.id}" class="edit-btn text-blue-600 font-bold text-[11px]">Éditer</button>
+              <button data-id="${b.id}" class="delete-btn text-red-500 font-bold text-[11px]">X</button>
             </td>
           </tr>
         `;
@@ -426,7 +435,6 @@
       document.getElementById('total-count').innerText = dayBookings.length;
       document.getElementById('total-revenue').innerText = `${totalRev} €`;
 
-      // Boutons Modifier & Supprimer
       document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', (e) => openEditModal(e.target.getAttribute('data-id')));
       });
@@ -439,9 +447,11 @@
           }
         });
       });
+
+      renderGrid();
+      renderWeek();
     }
 
-    // Modal de Modification
     window.openEditModal = function(id) {
       const b = bookings.find(item => item.id === id);
       if (!b) return;
@@ -466,7 +476,6 @@
       document.getElementById('edit-modal').classList.add('hidden');
     };
 
-    // Soumission de la modification
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const docId = document.getElementById('edit-id').value;
@@ -482,7 +491,7 @@
         if (qty > 0) {
           const avail = getAvailableStock(currentDate, newSlot, key, docId);
           if (qty > avail) {
-            alert(`Stock insuffisant pour ${INVENTORY[key].name} sur le créneau ${newSlot} ! Seul(s) ${avail} disponible(s).`);
+            alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`);
             return;
           }
           selectedItems[key] = qty;
@@ -511,11 +520,10 @@
       closeEditModal();
     });
 
-    // Formulaire de création
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const selectedDate = dateInput.value;
-      const selectedSlot = slotSelect.value;
+      const selectedSlot = formSlotSelect.value;
       
       let selectedItems = {};
       let totalPrice = 0;
@@ -562,8 +570,7 @@
       });
     });
 
-    dateInput.addEventListener('change', () => { render(); renderWeek(); });
-    slotSelect.addEventListener('change', render);
+    dateInput.addEventListener('change', renderAll);
   </script>
 </body>
 </html>
