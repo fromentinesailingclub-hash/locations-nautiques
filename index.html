@@ -13,21 +13,24 @@
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-2 md:p-6 pb-20">
   <div class="max-w-5xl mx-auto space-y-4">
     
-    <!-- En-tête Mobile Compact -->
+    <!-- En-tête Mobile Compact & Cliquable -->
     <header class="bg-blue-600 text-white rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="text-center sm:text-left">
         <h1 class="text-xl font-black tracking-tight">Fromentine Sailing Club</h1>
         <p class="text-blue-100 text-xs">Gestion & Sécurité Plage</p>
       </div>
       <div class="flex gap-2 w-full sm:w-auto text-center">
-        <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
-          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Résa(s)</span>
+        <!-- Bouton interactif Résa(s) -->
+        <button onclick="scrollToBookings()" class="bg-blue-700/90 hover:bg-blue-800 active:scale-95 transition-all rounded-xl px-3 py-1.5 flex-1 border border-blue-500/50 shadow-inner">
+          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Résa(s) 📋</span>
           <span id="total-count" class="text-lg font-black">0</span>
-        </div>
-        <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
-          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Sur l'eau 🚨</span>
+        </button>
+        <!-- Bouton interactif Sur l'eau -->
+        <button onclick="toggleOnWaterPanel()" class="bg-blue-700/90 hover:bg-blue-800 active:scale-95 transition-all rounded-xl px-3 py-1.5 flex-1 border border-blue-500/50 shadow-inner">
+          <span class="block text-[9px] uppercase tracking-wider text-amber-300 font-bold">Sur l'eau 🚨</span>
           <span id="total-on-water-count" class="text-lg font-black text-amber-300">0</span>
-        </div>
+        </button>
+        <!-- Total Recettes -->
         <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
           <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Recettes</span>
           <span id="total-revenue" class="text-lg font-black">0 €</span>
@@ -35,13 +38,13 @@
       </div>
     </header>
 
-    <!-- PANNEAU EN DIRECT : QUI EST SUR L'EAU ? -->
-    <section id="on-water-panel" class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-4 shadow-md hidden space-y-2">
+    <!-- PANNEAU EN DIRECT : QUI EST SUR L'EAU ? (Modifiable directement) -->
+    <section id="on-water-panel" class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-4 shadow-md hidden space-y-3 border-2 border-amber-400/40">
       <div class="flex justify-between items-center border-b border-blue-700/60 pb-2">
         <h2 class="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
-          <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span> Actuellement "Sur l'eau"
+          <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span> Clients actuellement "Sur l'eau"
         </h2>
-        <span id="on-water-subtitle" class="text-[10px] font-bold text-blue-200"></span>
+        <button onclick="toggleOnWaterPanel()" class="text-xs font-bold text-slate-300 hover:text-white px-2 py-0.5 bg-blue-800/80 rounded-lg">Fermer ✖</button>
       </div>
       <div id="on-water-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1"></div>
     </section>
@@ -76,9 +79,7 @@
           <!-- Choix du Responsable de Navigation -->
           <div>
             <label class="block text-[11px] font-bold text-slate-600 mb-1">Prise en charge par (Resp Nav) *</label>
-            <select id="client-name-select" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-bold bg-white focus:ring-2 focus:ring-blue-500 outline-none">
-              <!-- Rempli dynamiquement -->
-            </select>
+            <select id="client-name-select" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-bold bg-white focus:ring-2 focus:ring-blue-500 outline-none"></select>
             <input type="text" id="client-name-custom" placeholder="Saisir le nom du nouveau membre..." class="w-full border border-blue-400 rounded-xl p-2 text-sm mt-1.5 hidden bg-blue-50 focus:ring-2 focus:ring-blue-500 outline-none">
           </div>
 
@@ -124,8 +125,8 @@
       </section>
 
       <!-- Liste des Réservations -->
-      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 lg:col-span-2">
-        <h2 class="text-base font-black text-slate-800 mb-3 flex items-center gap-2">
+      <section id="bookings-section-day" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 lg:col-span-2 space-y-3">
+        <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
           <span class="w-2 h-4 bg-emerald-500 rounded-full inline-block"></span> Suivi & Sécurité du Jour
         </h2>
         <div class="overflow-x-auto">
@@ -139,35 +140,61 @@
                 <th class="py-2 px-2 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody id="bookings-table" class="divide-y divide-slate-100"></tbody>
+            <tbody id="bookings-table-day" class="divide-y divide-slate-100"></tbody>
           </table>
         </div>
       </section>
     </div>
 
-    <!-- VUE 2 : GRILLE DES DISPONIBILITÉS PAR CRÉNEAUX (EN-TÊTE FIXE) -->
-    <div id="view-grid" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h2 class="text-base font-black text-slate-800">Disponibilités Heure par Heure</h2>
-        <span class="text-[10px] font-bold text-slate-400">💡 Cliquez sur une case verte pour réserver</span>
-      </div>
+    <!-- VUE 2 : GRILLE DES DISPONIBILITÉS (EN-TÊTE FIXE + COLONNE GAUCHE FIXE + LISTE RÉSERVATIONS) -->
+    <div id="view-grid" class="hidden space-y-4">
       
-      <!-- Conteneur avec défilement et en-tête fixe (sticky) -->
-      <div class="overflow-x-auto max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200">
-        <table class="w-full text-center text-xs border-collapse">
-          <thead class="sticky top-0 bg-slate-800 text-white font-bold text-[11px] shadow-md z-10">
-            <tr>
-              <th class="p-2.5 text-left border-b border-slate-700 bg-slate-800">Créneau</th>
-              <th class="p-2.5 border-b border-slate-700 bg-slate-800">Windsurf (2)</th>
-              <th class="p-2.5 border-b border-slate-700 bg-slate-800">K. Double (2)</th>
-              <th class="p-2.5 border-b border-slate-700 bg-slate-800">K. Simple (1)</th>
-              <th class="p-2.5 border-b border-slate-700 bg-slate-800">Paddle (5)</th>
-              <th class="p-2.5 border-b border-slate-700 bg-slate-800">Rescue (1)</th>
-            </tr>
-          </thead>
-          <tbody id="grid-dispo-table" class="divide-y divide-slate-200 font-medium"></tbody>
-        </table>
-      </div>
+      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+        <div class="flex justify-between items-center border-b pb-2">
+          <h2 class="text-base font-black text-slate-800">Disponibilités Heure par Heure</h2>
+          <span class="text-[10px] font-bold text-slate-400">💡 Cliquez sur une case verte pour réserver</span>
+        </div>
+        
+        <!-- Table avec freeze en-tête ET freeze colonne gauche -->
+        <div class="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 relative">
+          <table class="w-full text-center text-xs border-separate border-spacing-0">
+            <thead>
+              <tr>
+                <!-- Angle supérieur gauche : Double Sticky (Top 0 + Left 0) -->
+                <th class="sticky top-0 left-0 z-30 bg-slate-900 text-white p-2.5 text-left border-b border-r border-slate-700 font-bold text-[11px]">Créneau</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">Windsurf (2)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">K. Double (2)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">K. Simple (1)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">Paddle (5)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">Rescue (1)</th>
+              </tr>
+            </thead>
+            <tbody id="grid-dispo-table" class="divide-y divide-slate-200 font-medium"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Rappel des réservations du jour sous la grille -->
+      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+        <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
+          <span class="w-2 h-4 bg-emerald-500 rounded-full inline-block"></span> Réservations du Jour
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600">
+            <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">
+              <tr>
+                <th class="py-2 px-2">Heure</th>
+                <th class="py-2 px-2">Client / Urgence</th>
+                <th class="py-2 px-2">Matériel</th>
+                <th class="py-2 px-2">Suivi Équipe & Retour</th>
+                <th class="py-2 px-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-table-grid" class="divide-y divide-slate-100"></tbody>
+          </table>
+        </div>
+      </section>
+
     </div>
 
     <!-- VUE 3 : VUE SEMAINE GLOBAL -->
@@ -426,6 +453,22 @@
       }
     };
 
+    // Actions interactives du Bandeau Bleu Supérieur
+    window.scrollToBookings = function() {
+      switchView('day');
+      document.getElementById('bookings-section-day').scrollIntoView({ behavior: 'smooth' });
+    };
+
+    window.toggleOnWaterPanel = function() {
+      const panel = document.getElementById('on-water-panel');
+      if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        panel.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        panel.classList.add('hidden');
+      }
+    };
+
     window.startBookingFromGrid = function(slot, itemKey) {
       formSlotSelect.value = slot;
       updateEquipmentSelectors(itemKey);
@@ -439,16 +482,17 @@
       gridTable.innerHTML = '';
 
       SLOTS.forEach(slot => {
-        let rowHtml = `<tr><td class="p-2 border font-bold text-slate-700 bg-slate-50 text-[11px]">${slot}</td>`;
+        // Sticky sur la colonne de gauche (Horaires)
+        let rowHtml = `<tr><td class="sticky left-0 z-10 bg-slate-100 p-2 border-b border-r border-slate-300 font-bold text-slate-800 text-[11px] shadow-xs">${slot}</td>`;
         
         Object.keys(INVENTORY).forEach(key => {
           const avail = getAvailableStock(selectedDate, slot, key);
           const max = INVENTORY[key].max;
           
           if (avail === 0) {
-            rowHtml += `<td class="p-2 border bg-red-100 text-red-700 font-bold opacity-75 text-xs">${avail} / ${max}</td>`;
+            rowHtml += `<td class="p-2 border-b border-slate-200 bg-red-100 text-red-700 font-bold opacity-75 text-xs">${avail} / ${max}</td>`;
           } else {
-            rowHtml += `<td onclick="startBookingFromGrid('${slot}', '${key}')" class="p-2 border bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold cursor-pointer active:scale-95 transition-all text-xs" title="Réserver ce créneau">➕ ${avail} dispo</td>`;
+            rowHtml += `<td onclick="startBookingFromGrid('${slot}', '${key}')" class="p-2 border-b border-slate-200 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold cursor-pointer active:scale-95 transition-all text-xs" title="Réserver ce créneau">➕ ${avail} dispo</td>`;
           }
         });
 
@@ -511,30 +555,9 @@
       }
     }
 
-    function renderAll() {
-      updateRespSelectOptions();
-      updateEquipmentSelectors();
-      
-      const selectedDate = dateInput.value;
-      const table = document.getElementById('bookings-table');
-      table.innerHTML = '';
-      const dayBookings = bookings.filter(b => b.date === selectedDate);
-      
-      let totalRev = 0;
-      let onWaterCount = 0;
-      let activeOnWaterList = [];
-
+    function buildBookingsTableRows(dayBookings) {
+      let html = '';
       dayBookings.forEach((b) => {
-        totalRev += b.totalPrice;
-
-        const slotStarted = hasSlotStarted(b.date, b.slot);
-        const isOnWater = slotStarted && !b.returned;
-
-        if (isOnWater) {
-          onWaterCount++;
-          activeOnWaterList.push(b);
-        }
-
         let itemsSummary = [];
         if (b.items) {
           Object.keys(b.items).forEach(k => {
@@ -542,9 +565,10 @@
           });
         }
 
+        const slotStarted = hasSlotStarted(b.date, b.slot);
         const isPaid = (b.status === 'Réglé');
 
-        table.innerHTML += `
+        html += `
           <tr class="${b.returned ? 'bg-slate-50/50 opacity-75' : 'bg-white'}">
             <td class="py-2.5 px-2 font-bold text-[11px] text-blue-900">${b.slot}</td>
             <td class="py-2.5 px-2">
@@ -597,20 +621,44 @@
           </tr>
         `;
       });
+      return html;
+    }
+
+    function renderAll() {
+      updateRespSelectOptions();
+      updateEquipmentSelectors();
+      
+      const selectedDate = dateInput.value;
+      const dayBookings = bookings.filter(b => b.date === selectedDate);
+      
+      let totalRev = 0;
+      let onWaterCount = 0;
+      let activeOnWaterList = [];
+
+      dayBookings.forEach((b) => {
+        totalRev += b.totalPrice;
+        const slotStarted = hasSlotStarted(b.date, b.slot);
+        if (slotStarted && !b.returned) {
+          onWaterCount++;
+          activeOnWaterList.push(b);
+        }
+      });
+
+      // Injection dans le tableau de la vue Journée et la vue Grille
+      const tableRowsHtml = buildBookingsTableRows(dayBookings);
+      document.getElementById('bookings-table-day').innerHTML = tableRowsHtml;
+      document.getElementById('bookings-table-grid').innerHTML = tableRowsHtml;
 
       document.getElementById('total-count').innerText = dayBookings.length;
       document.getElementById('total-on-water-count').innerText = onWaterCount;
       document.getElementById('total-revenue').innerText = `${totalRev} €`;
 
+      // Mise à jour du Panneau Interactif "Sur l'eau"
       const onWaterPanel = document.getElementById('on-water-panel');
       const onWaterList = document.getElementById('on-water-list');
-      const onWaterSubtitle = document.getElementById('on-water-subtitle');
 
-      if (onWaterCount > 0) {
-        onWaterPanel.classList.remove('hidden');
-        onWaterSubtitle.innerText = `${onWaterCount} embarcation(s) en mer`;
+      if (activeOnWaterList.length > 0) {
         onWaterList.innerHTML = '';
-
         activeOnWaterList.forEach(b => {
           let itemsArr = [];
           if (b.items) {
@@ -619,35 +667,44 @@
             });
           }
           onWaterList.innerHTML += `
-            <div class="bg-blue-800/80 border border-blue-600 rounded-xl p-2.5 text-xs flex justify-between items-center shadow-inner">
+            <div class="bg-blue-800/90 border border-blue-500 rounded-xl p-3 text-xs flex justify-between items-center shadow-md">
               <div>
-                <span class="font-black text-amber-300 block">${b.client} ${b.phone ? `(${b.phone})` : ''}</span>
-                <span class="text-[11px] text-white font-medium block">${itemsArr.join(', ')}</span>
-                <span class="text-[9px] text-blue-200">Créneau: ${b.slot} • Resp: ${b.respNav || 'N/A'}</span>
+                <span class="font-black text-amber-300 text-sm block">${b.client} ${b.phone ? `<a href="tel:${b.phone}" class="text-blue-200 text-xs underline">📞 ${b.phone}</a>` : ''}</span>
+                <span class="text-[11px] text-white font-bold block mt-0.5">${itemsArr.join(', ')}</span>
+                <span class="text-[9px] text-blue-200">Créneau: ${b.slot} • Resp Nav: ${b.respNav || 'N/A'}</span>
               </div>
-              <span class="text-[10px] font-black bg-red-600 text-white px-2 py-1 rounded-lg shadow uppercase tracking-wide">Sur l'eau</span>
+              <div class="flex flex-col gap-1 items-end">
+                <button data-id="${b.id}" class="quick-return-btn bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black text-[10px] px-2.5 py-1.5 rounded-lg shadow">⚓ Valider Rentré</button>
+                <button data-id="${b.id}" class="edit-btn text-blue-200 hover:text-white font-bold text-[10px] underline">✏️ Edit</button>
+              </div>
             </div>
           `;
         });
       } else {
-        onWaterPanel.classList.add('hidden');
+        onWaterList.innerHTML = `<p class="text-xs text-blue-200 italic col-span-2">Aucun client actuellement sur l'eau.</p>`;
       }
 
+      // Event Listeners Restitution depuis Panneau "Sur l'eau"
+      document.querySelectorAll('.quick-return-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const docId = e.target.getAttribute('data-id');
+          let returnedBy = prompt("Nom du responsable qui réceptionne le matériel :", respSelect.value !== '__NEW__' ? respSelect.value : '');
+          if (!returnedBy) returnedBy = 'Équipe Plage';
+          await updateDoc(doc(db, 'bookings', docId), { returned: true, returnedBy: returnedBy });
+        });
+      });
+
+      // Event Listeners Tableaux
       document.querySelectorAll('.toggle-returned').forEach(chk => {
         chk.addEventListener('change', async (e) => {
           const docId = e.target.getAttribute('data-id');
           const isChecked = e.target.checked;
-          
           let returnedBy = '';
           if (isChecked) {
             returnedBy = prompt("Nom du responsable qui réceptionne le matériel :", respSelect.value !== '__NEW__' ? respSelect.value : '');
             if (!returnedBy) returnedBy = 'Équipe Plage';
           }
-
-          await updateDoc(doc(db, 'bookings', docId), { 
-            returned: isChecked,
-            returnedBy: returnedBy
-          });
+          await updateDoc(doc(db, 'bookings', docId), { returned: isChecked, returnedBy: returnedBy });
         });
       });
 
