@@ -2,171 +2,159 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Fromentine Sailing Club — Plage & Sécurité</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    /* Animation douce pour les fenêtres */
+    .fade-in { animation: fadeIn 0.2s ease-out forwards; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-2 md:p-6 pb-20">
-  <div class="max-w-5xl mx-auto space-y-4">
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-2 sm:p-4 pb-24 select-none">
+  <div class="max-w-4xl mx-auto space-y-3">
     
-    <!-- En-tête Mobile Compact & Cliquable -->
-    <header class="bg-blue-600 text-white rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-3">
-      <div class="text-center sm:text-left">
-        <h1 class="text-xl font-black tracking-tight">Fromentine Sailing Club</h1>
-        <p class="text-blue-100 text-xs">Gestion & Sécurité Plage</p>
-      </div>
-      <div class="flex gap-2 w-full sm:w-auto text-center">
-        <!-- Bouton interactif Résa(s) -->
-        <button onclick="scrollToBookings()" class="bg-blue-700/90 hover:bg-blue-800 active:scale-95 transition-all rounded-xl px-3 py-1.5 flex-1 border border-blue-500/50 shadow-inner">
-          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Résa(s) 📋</span>
-          <span id="total-count" class="text-lg font-black">0</span>
-        </button>
-        <!-- Bouton interactif Sur l'eau -->
-        <button onclick="toggleOnWaterPanel()" class="bg-blue-700/90 hover:bg-blue-800 active:scale-95 transition-all rounded-xl px-3 py-1.5 flex-1 border border-blue-500/50 shadow-inner">
-          <span class="block text-[9px] uppercase tracking-wider text-amber-300 font-bold">Sur l'eau 🚨</span>
-          <span id="total-on-water-count" class="text-lg font-black text-amber-300">0</span>
-        </button>
-        <!-- Total Recettes -->
-        <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
-          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Recettes</span>
-          <span id="total-revenue" class="text-lg font-black">0 €</span>
+    <!-- EN-TÊTE ULTRA CLAIR & CLIQUABLE -->
+    <header class="bg-blue-600 text-white rounded-2xl p-3.5 shadow-md space-y-2">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-lg font-black tracking-tight leading-tight">Fromentine Sailing Club</h1>
+          <p class="text-blue-100 text-[11px]">Gestion & Sécurité Plage</p>
         </div>
+        <div class="text-right">
+          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Recettes du jour</span>
+          <span id="total-revenue" class="text-lg font-black text-emerald-300">0 €</span>
+        </div>
+      </div>
+
+      <!-- RACCOURCIS TACTILES GÉANTS -->
+      <div class="grid grid-cols-2 gap-2 pt-1">
+        <button onclick="scrollToBookings()" class="bg-blue-700/80 active:scale-95 transition-transform rounded-xl p-2 flex items-center justify-between border border-blue-400/40">
+          <span class="text-xs font-bold text-blue-100">📋 Total Résas</span>
+          <span id="total-count" class="text-base font-black bg-blue-900 px-2.5 py-0.5 rounded-lg">0</span>
+        </button>
+        <button onclick="toggleOnWaterPanel()" class="bg-blue-700/80 active:scale-95 transition-transform rounded-xl p-2 flex items-center justify-between border border-blue-400/40">
+          <span class="text-xs font-bold text-amber-300">🚨 Sur l'eau</span>
+          <span id="total-on-water-count" class="text-base font-black bg-red-600 text-white px-2.5 py-0.5 rounded-lg animate-pulse">0</span>
+        </button>
       </div>
     </header>
 
-    <!-- PANNEAU EN DIRECT : QUI EST SUR L'EAU ? (Modifiable directement) -->
-    <section id="on-water-panel" class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-4 shadow-md hidden space-y-3 border-2 border-amber-400/40">
-      <div class="flex justify-between items-center border-b border-blue-700/60 pb-2">
+    <!-- PANNEAU "SUR L'EAU" EN DIRECT -->
+    <section id="on-water-panel" class="bg-slate-900 text-white rounded-2xl p-4 shadow-xl hidden space-y-3 border-2 border-amber-400/60 fade-in">
+      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
         <h2 class="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
-          <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span> Clients actuellement "Sur l'eau"
+          <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span> Pratiquants "Sur l'eau"
         </h2>
-        <button onclick="toggleOnWaterPanel()" class="text-xs font-bold text-slate-300 hover:text-white px-2 py-0.5 bg-blue-800/80 rounded-lg">Fermer ✖</button>
+        <button onclick="toggleOnWaterPanel()" class="text-xs font-bold text-slate-300 bg-slate-800 active:bg-slate-700 px-3 py-1.5 rounded-xl border border-slate-600">❌ Fermer</button>
       </div>
-      <div id="on-water-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1"></div>
+      <div id="on-water-list" class="space-y-2 pt-1"></div>
     </section>
 
-    <!-- Navigation Onglets -->
-    <nav class="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200 overflow-x-auto no-scrollbar gap-1 text-xs font-bold">
-      <button id="tab-day-btn" onclick="switchView('day')" class="flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white whitespace-nowrap transition-all text-center">➕ Nouvelle Réservation</button>
-      <button id="tab-grid-btn" onclick="switchView('grid')" class="flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center">📊 Dispo / Créneaux</button>
-      <button id="tab-week-btn" onclick="switchView('week')" class="flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center">📅 Dispo / Semaine</button>
+    <!-- BARRE DE NAVIGATION (BOUTONS GÉANTS) -->
+    <nav class="grid grid-cols-3 bg-white rounded-2xl p-1.5 shadow-sm border border-slate-200 gap-1 text-xs font-bold text-center">
+      <button id="tab-day-btn" onclick="switchView('day')" class="py-3 px-1 rounded-xl bg-blue-600 text-white transition-all">➕ Réservation</button>
+      <button id="tab-grid-btn" onclick="switchView('grid')" class="py-3 px-1 rounded-xl text-slate-600 active:bg-slate-100 transition-all">📊 Dispos</button>
+      <button id="tab-week-btn" onclick="switchView('week')" class="py-3 px-1 rounded-xl text-slate-600 active:bg-slate-100 transition-all">📅 Semaine</button>
     </nav>
 
-    <!-- Filtre Date Unique -->
-    <section class="bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex items-center justify-between gap-3">
-      <label for="filter-date" class="font-bold text-slate-700 text-xs uppercase tracking-wider">Date :</label>
-      <input type="date" id="filter-date" class="border-2 border-blue-500 rounded-lg p-2 text-sm font-bold text-blue-900 bg-blue-50 focus:outline-none flex-1 max-w-[200px]">
+    <!-- SELECTEUR DE DATE LARGE -->
+    <section class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 flex items-center justify-between gap-2">
+      <label for="filter-date" class="font-bold text-slate-700 text-xs uppercase tracking-wider">🗓️ Date :</label>
+      <input type="date" id="filter-date" class="border-2 border-blue-500 rounded-xl p-2 text-sm font-bold text-blue-900 bg-blue-50 focus:outline-none flex-1 max-w-[220px]">
     </section>
 
-    <!-- VUE 1 : CRÉATION & LISTE DU JOUR -->
-    <div id="view-day" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <!-- VUE 1 : NOUVELLE RÉSERVATION & SUIVI DU JOUR -->
+    <div id="view-day" class="space-y-4">
       
-      <!-- Formulaire -->
-      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 lg:col-span-1 space-y-3">
-        <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
-          <span class="w-2 h-4 bg-blue-600 rounded-full inline-block"></span> Nouvelle Réservation
+      <!-- Formulaire de Réservation -->
+      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+        <h2 class="text-base font-black text-slate-800 flex items-center gap-2 border-b pb-2">
+          <span class="w-3 h-3 bg-blue-600 rounded-full inline-block"></span> 1. Saisir une réservation
         </h2>
+        
         <form id="booking-form" class="space-y-3">
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Créneau horaire *</label>
-            <select id="form-slot" class="w-full border-2 border-slate-200 rounded-xl p-2.5 text-sm font-bold bg-slate-50 focus:border-blue-500 outline-none"></select>
+            <label class="block text-xs font-bold text-slate-600 mb-1">⏰ Créneau horaire</label>
+            <select id="form-slot" class="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-bold bg-slate-50 focus:border-blue-500 outline-none"></select>
           </div>
 
-          <!-- Choix du Responsable de Navigation -->
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Prise en charge par (Resp Nav) *</label>
-            <select id="client-name-select" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-bold bg-white focus:ring-2 focus:ring-blue-500 outline-none"></select>
-            <input type="text" id="client-name-custom" placeholder="Saisir le nom du nouveau membre..." class="w-full border border-blue-400 rounded-xl p-2 text-sm mt-1.5 hidden bg-blue-50 focus:ring-2 focus:ring-blue-500 outline-none">
+            <label class="block text-xs font-bold text-slate-600 mb-1">👤 Resp Nav / Prise en charge *</label>
+            <select id="client-name-select" class="w-full border border-slate-300 rounded-xl p-3 text-sm font-bold bg-white focus:ring-2 focus:ring-blue-500 outline-none"></select>
+            <input type="text" id="client-name-custom" placeholder="Saisir le nom du nouveau membre..." class="w-full border border-blue-400 rounded-xl p-2.5 text-sm mt-1.5 hidden bg-blue-50 focus:ring-2 focus:ring-blue-500 outline-none">
           </div>
 
-          <!-- Nom du Client -->
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Nom du client / Pratiquant *</label>
-            <input type="text" id="client-name" placeholder="ex: Jean Dupont" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+            <label class="block text-xs font-bold text-slate-600 mb-1">🏷️ Nom de la réservation *</label>
+            <input type="text" id="client-name" placeholder="ex: Mr Dupont" class="w-full border border-slate-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-1">Téléphone client</label>
-              <input type="tel" id="client-phone" placeholder="06.." class="w-full border border-slate-300 rounded-lg p-2 text-xs outline-none">
+              <label class="block text-xs font-bold text-slate-500 mb-1">📞 Téléphone</label>
+              <input type="tel" id="client-phone" placeholder="06 12 34 56 78" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs outline-none">
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-1">Autres pratiquants</label>
-              <input type="text" id="users-names" placeholder="Paul, Luc.." class="w-full border border-slate-300 rounded-lg p-2 text-xs outline-none">
+              <label class="block text-xs font-bold text-slate-500 mb-1">👥 Participants</label>
+              <input type="text" id="users-names" placeholder="ex: Marc (participe), Paul..." class="w-full border border-slate-300 rounded-xl p-2.5 text-xs outline-none">
             </div>
           </div>
 
-          <div class="bg-amber-50/80 p-2.5 rounded-xl border border-amber-200">
-            <label class="block text-[10px] font-bold text-amber-900 mb-1">🚨 Contact Urgence (Optionnel)</label>
-            <input type="text" id="emergency-contact" placeholder="Nom + Téléphone" class="w-full border border-amber-300 rounded-lg p-1.5 text-xs bg-white outline-none">
+          <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+            <label class="block text-[11px] font-bold text-amber-900 mb-1">🚨 Contact Urgence (Optionnel)</label>
+            <input type="text" id="emergency-contact" placeholder="Nom + N° Téléphone" class="w-full border border-amber-300 rounded-lg p-2 text-xs bg-white outline-none">
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1.5">Matériels à louer :</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">🏄‍♂️ Choix du Matériel :</label>
             <div id="equipment-selection" class="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200"></div>
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Statut Règlement</label>
-            <select id="payment-status" class="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold bg-white">
+            <label class="block text-xs font-bold text-slate-600 mb-1">💳 Règlement</label>
+            <select id="payment-status" class="w-full border border-slate-300 rounded-xl p-3 text-xs font-bold bg-white">
               <option value="Non réglé" selected>⏳ Non réglé (Par défaut)</option>
               <option value="Réglé">✅ Réglé</option>
             </select>
           </div>
 
-          <button type="submit" class="w-full bg-blue-600 active:bg-blue-700 text-white font-black py-3 rounded-xl transition-all text-sm shadow-md uppercase tracking-wider">
-            Valider la réservation
+          <button type="submit" class="w-full bg-blue-600 active:bg-blue-700 text-white font-black py-4 rounded-xl transition-all text-base shadow-lg uppercase tracking-wider">
+            ✅ Valider la réservation
           </button>
         </form>
       </section>
 
-      <!-- Liste des Réservations -->
-      <section id="bookings-section-day" class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 lg:col-span-2 space-y-3">
+      <!-- Suivi sous forme de Cartes (Super fluide) -->
+      <section id="bookings-section-day" class="space-y-3">
         <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
-          <span class="w-2 h-4 bg-emerald-500 rounded-full inline-block"></span> Suivi & Sécurité du Jour
+          <span class="w-3 h-3 bg-emerald-500 rounded-full inline-block"></span> 2. Suivi des Réservations du Jour
         </h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-slate-600">
-            <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">
-              <tr>
-                <th class="py-2 px-2">Heure</th>
-                <th class="py-2 px-2">Client / Urgence</th>
-                <th class="py-2 px-2">Matériel</th>
-                <th class="py-2 px-2">Suivi Équipe & Retour</th>
-                <th class="py-2 px-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="bookings-table-day" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
+        <div id="bookings-cards-day" class="space-y-2.5"></div>
       </section>
     </div>
 
-    <!-- VUE 2 : GRILLE DES DISPONIBILITÉS (EN-TÊTE FIXE + COLONNE GAUCHE FIXE + LISTE RÉSERVATIONS) -->
+    <!-- VUE 2 : GRILLE DES DISPONIBILITÉS (DOUBLE FREEZE) -->
     <div id="view-grid" class="hidden space-y-4">
-      
-      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
+      <section class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-3">
         <div class="flex justify-between items-center border-b pb-2">
-          <h2 class="text-base font-black text-slate-800">Disponibilités Heure par Heure</h2>
-          <span class="text-[10px] font-bold text-slate-400">💡 Cliquez sur une case verte pour réserver</span>
+          <h2 class="text-base font-black text-slate-800">Disponibilités par Créneau</h2>
+          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-lg">Cliquer sur le vert pour réserver</span>
         </div>
         
-        <!-- Table avec freeze en-tête ET freeze colonne gauche -->
+        <!-- Table avec Double Sticky (En-tête ET Colonne Horaires) -->
         <div class="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 relative">
           <table class="w-full text-center text-xs border-separate border-spacing-0">
             <thead>
               <tr>
-                <!-- Angle supérieur gauche : Double Sticky (Top 0 + Left 0) -->
                 <th class="sticky top-0 left-0 z-30 bg-slate-900 text-white p-2.5 text-left border-b border-r border-slate-700 font-bold text-[11px]">Créneau</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">Windsurf (2)</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">K. Double (2)</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">K. Simple (1)</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">Paddle (5)</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[90px]">Rescue (1)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Windsurf (2)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">K. Double (2)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">K. Simple (1)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Paddle (5)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Rescue (1)</th>
               </tr>
             </thead>
             <tbody id="grid-dispo-table" class="divide-y divide-slate-200 font-medium"></tbody>
@@ -174,74 +162,62 @@
         </div>
       </section>
 
-      <!-- Rappel des réservations du jour sous la grille -->
-      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
-        <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
-          <span class="w-2 h-4 bg-emerald-500 rounded-full inline-block"></span> Réservations du Jour
-        </h2>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs text-slate-600">
-            <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">
-              <tr>
-                <th class="py-2 px-2">Heure</th>
-                <th class="py-2 px-2">Client / Urgence</th>
-                <th class="py-2 px-2">Matériel</th>
-                <th class="py-2 px-2">Suivi Équipe & Retour</th>
-                <th class="py-2 px-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody id="bookings-table-grid" class="divide-y divide-slate-100"></tbody>
-          </table>
-        </div>
+      <!-- Suivi du jour sous la grille -->
+      <section class="space-y-3">
+        <h2 class="text-base font-black text-slate-800">Réservations du Jour</h2>
+        <div id="bookings-cards-grid" class="space-y-2.5"></div>
       </section>
-
     </div>
 
     <!-- VUE 3 : VUE SEMAINE GLOBAL -->
     <div id="view-week" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
-      <h2 class="text-base font-black text-slate-800 border-b pb-2">Vue Semainier des Disponibilités</h2>
+      <h2 class="text-base font-black text-slate-800 border-b pb-2">Planning de la Semaine</h2>
       <div id="week-container" class="space-y-3"></div>
     </div>
 
   </div>
 
-  <!-- MODAL EDIT -->
-  <div id="edit-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl max-h-[90vh] overflow-y-auto space-y-3">
+  <!-- MODAL EDIT (Super facile à fermer) -->
+  <div id="edit-modal" onclick="handleModalBackdropClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 fade-in">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl max-h-[90vh] overflow-y-auto space-y-3 border-2 border-blue-500">
       <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="text-base font-bold text-slate-800">Modifier la Réservation</h3>
-        <button onclick="closeEditModal()" class="text-slate-400 font-black text-2xl">&times;</button>
+        <h3 class="text-base font-bold text-slate-800">✏️ Modifier la Réservation</h3>
+        <button onclick="closeEditModal()" class="text-xs font-bold text-slate-600 bg-slate-100 active:bg-slate-200 px-3 py-1.5 rounded-xl">❌ Fermer</button>
       </div>
       <form id="edit-form" class="space-y-3">
         <input type="hidden" id="edit-id">
         <div>
           <label class="block text-[10px] font-bold text-slate-500 mb-1">Créneau</label>
-          <select id="edit-slot" class="w-full border rounded-xl p-2 text-xs font-bold bg-slate-50"></select>
+          <select id="edit-slot" class="w-full border rounded-xl p-2.5 text-xs font-bold bg-slate-50"></select>
         </div>
         <div>
           <label class="block text-[10px] font-bold text-slate-500 mb-1">Resp Nav / Prise en charge</label>
-          <input type="text" id="edit-resp-name" class="w-full border rounded-xl p-2 text-xs font-bold" required>
+          <input type="text" id="edit-resp-name" class="w-full border rounded-xl p-2.5 text-xs font-bold" required>
         </div>
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Client</label>
-          <input type="text" id="edit-client-name" class="w-full border rounded-xl p-2 text-xs font-bold" required>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Nom de la réservation</label>
+          <input type="text" id="edit-client-name" class="w-full border rounded-xl p-2.5 text-xs font-bold" required>
         </div>
-        <div class="grid grid-cols-2 gap-2">
-          <input type="tel" id="edit-client-phone" placeholder="Tél" class="border rounded-lg p-2 text-xs">
-          <input type="text" id="edit-users-names" placeholder="Pratiquants" class="border rounded-lg p-2 text-xs">
-        </div>
-        <input type="text" id="edit-emergency-contact" placeholder="Contact Urgence" class="w-full border border-amber-300 rounded-lg p-2 text-xs bg-amber-50">
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Quantités</label>
-          <div id="edit-equipment-selection" class="space-y-1 bg-slate-50 p-2 rounded-xl border"></div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Téléphone</label>
+          <input type="tel" id="edit-client-phone" class="w-full border rounded-xl p-2.5 text-xs">
         </div>
-        <select id="edit-payment-status" class="w-full border rounded-xl p-2 text-xs font-bold">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Participants</label>
+          <input type="text" id="edit-users-names" class="w-full border rounded-xl p-2.5 text-xs">
+        </div>
+        <input type="text" id="edit-emergency-contact" placeholder="Contact Urgence" class="w-full border border-amber-300 rounded-xl p-2.5 text-xs bg-amber-50">
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Quantités de matériel</label>
+          <div id="edit-equipment-selection" class="space-y-2 bg-slate-50 p-2.5 rounded-xl border"></div>
+        </div>
+        <select id="edit-payment-status" class="w-full border rounded-xl p-2.5 text-xs font-bold">
           <option value="Non réglé">⏳ Non réglé</option>
           <option value="Réglé">✅ Réglé</option>
         </select>
         <div class="flex gap-2 pt-2">
-          <button type="button" onclick="closeEditModal()" class="w-1/2 bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">Annuler</button>
-          <button type="submit" class="w-1/2 bg-blue-600 text-white font-bold py-2 rounded-xl text-xs shadow">Enregistrer</button>
+          <button type="button" onclick="closeEditModal()" class="w-1/2 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs">Annuler</button>
+          <button type="submit" class="w-1/2 bg-blue-600 text-white font-bold py-3 rounded-xl text-xs shadow">Enregistrer</button>
         </div>
       </form>
     </div>
@@ -325,13 +301,11 @@
     function hasSlotStarted(dateStr, slotStr) {
       const now = new Date();
       const todayStr = now.toISOString().split('T')[0];
-      
       if (dateStr < todayStr) return true;
       if (dateStr > todayStr) return false;
 
       const startTimeStr = slotStr.split(' - ')[0];
       const [startHour, startMin] = startTimeStr.split(':').map(Number);
-      
       const slotStartTime = new Date();
       slotStartTime.setHours(startHour, startMin, 0, 0);
 
@@ -350,6 +324,20 @@
       return INVENTORY[itemKey].max - used;
     }
 
+    // Gestion ergonomique des Quantités (Boutons + / -)
+    window.changeQty = function(key, delta) {
+      const el = document.getElementById(`qty-val-${key}`);
+      const input = document.getElementById(`qty-${key}`);
+      let val = parseInt(input.value) + delta;
+      const max = parseInt(input.getAttribute('max'));
+      
+      if (val < 0) val = 0;
+      if (val > max) val = max;
+
+      input.value = val;
+      el.innerText = val;
+    };
+
     function updateEquipmentSelectors(selectedKeyToIncrement = null) {
       const selectedDate = dateInput.value;
       const selectedSlot = formSlotSelect.value;
@@ -359,41 +347,34 @@
 
       Object.keys(INVENTORY).forEach(key => {
         const avail = getAvailableStock(selectedDate, selectedSlot, key);
-        let optionsHtml = '';
-        
-        for (let i = 0; i <= avail; i++) {
-          optionsHtml += `<option value="${i}">${i}</option>`;
-        }
-
         const isTarget = (selectedKeyToIncrement === key && avail > 0);
+        const initVal = isTarget ? 1 : 0;
 
         eqContainer.innerHTML += `
-          <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border border-slate-200">
+          <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200">
             <div>
-              <span class="font-bold text-slate-800 block">${INVENTORY[key].name}</span>
+              <span class="font-bold text-slate-800 text-xs block">${INVENTORY[key].name}</span>
               <span class="text-[10px] ${avail > 0 ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}">${avail} dispo (${INVENTORY[key].price}€/h)</span>
             </div>
-            <select id="qty-${key}" class="border border-slate-300 rounded-lg px-3 py-1 font-black text-sm ${avail === 0 ? 'bg-slate-100 text-slate-400' : 'bg-slate-50 focus:ring-2 focus:ring-blue-500'}" ${avail === 0 ? 'disabled' : ''}>
-              ${optionsHtml}
-            </select>
+            
+            <input type="hidden" id="qty-${key}" value="${initVal}" max="${avail}">
+
+            <div class="flex items-center gap-2">
+              <button type="button" onclick="changeQty('${key}', -1)" class="w-8 h-8 rounded-lg bg-slate-100 active:bg-slate-200 text-slate-700 font-black text-base border flex items-center justify-center">−</button>
+              <span id="qty-val-${key}" class="w-5 text-center font-black text-sm text-blue-900">${initVal}</span>
+              <button type="button" onclick="changeQty('${key}', 1)" class="w-8 h-8 rounded-lg bg-blue-100 active:bg-blue-200 text-blue-800 font-black text-base border border-blue-300 flex items-center justify-center" ${avail === 0 ? 'disabled' : ''}>+</button>
+            </div>
           </div>
         `;
-
-        if (isTarget) {
-          setTimeout(() => {
-            const el = document.getElementById(`qty-${key}`);
-            if (el) el.value = 1;
-          }, 0);
-        }
 
         let editOptionsHtml = '';
         for (let i = 0; i <= INVENTORY[key].max; i++) {
           editOptionsHtml += `<option value="${i}">${i}</option>`;
         }
         editEqContainer.innerHTML += `
-          <div class="flex justify-between items-center text-xs bg-white p-1.5 rounded border">
+          <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border">
             <span class="font-bold text-slate-800">${INVENTORY[key].name}</span>
-            <select id="edit-qty-${key}" class="border rounded px-2 py-0.5 font-bold text-xs bg-slate-50">
+            <select id="edit-qty-${key}" class="border rounded-lg px-3 py-1 font-bold text-xs bg-slate-50">
               ${editOptionsHtml}
             </select>
           </div>
@@ -404,9 +385,7 @@
     function updateRespSelectOptions() {
       const counts = {};
       bookings.forEach(b => {
-        if (b.respNav) {
-          counts[b.respNav] = (counts[b.respNav] || 0) + 1;
-        }
+        if (b.respNav) counts[b.respNav] = (counts[b.respNav] || 0) + 1;
       });
 
       const sortedResps = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
@@ -435,25 +414,24 @@
       gridView.classList.add('hidden');
       weekView.classList.add('hidden');
 
-      btnDay.className = "flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center";
-      btnGrid.className = "flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center";
-      btnWeek.className = "flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center";
+      btnDay.className = "py-3 px-1 rounded-xl text-slate-600 active:bg-slate-100 transition-all";
+      btnGrid.className = "py-3 px-1 rounded-xl text-slate-600 active:bg-slate-100 transition-all";
+      btnWeek.className = "py-3 px-1 rounded-xl text-slate-600 active:bg-slate-100 transition-all";
 
       if (view === 'day') {
         dayView.classList.remove('hidden');
-        btnDay.className = "flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white font-bold whitespace-nowrap transition-all text-center shadow-sm";
+        btnDay.className = "py-3 px-1 rounded-xl bg-blue-600 text-white font-bold transition-all shadow-sm";
       } else if (view === 'grid') {
         gridView.classList.remove('hidden');
-        btnGrid.className = "flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white font-bold whitespace-nowrap transition-all text-center shadow-sm";
+        btnGrid.className = "py-3 px-1 rounded-xl bg-blue-600 text-white font-bold transition-all shadow-sm";
         renderGrid();
       } else {
         weekView.classList.remove('hidden');
-        btnWeek.className = "flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white font-bold whitespace-nowrap transition-all text-center shadow-sm";
+        btnWeek.className = "py-3 px-1 rounded-xl bg-blue-600 text-white font-bold transition-all shadow-sm";
         renderWeek();
       }
     };
 
-    // Actions interactives du Bandeau Bleu Supérieur
     window.scrollToBookings = function() {
       switchView('day');
       document.getElementById('bookings-section-day').scrollIntoView({ behavior: 'smooth' });
@@ -482,7 +460,6 @@
       gridTable.innerHTML = '';
 
       SLOTS.forEach(slot => {
-        // Sticky sur la colonne de gauche (Horaires)
         let rowHtml = `<tr><td class="sticky left-0 z-10 bg-slate-100 p-2 border-b border-r border-slate-300 font-bold text-slate-800 text-[11px] shadow-xs">${slot}</td>`;
         
         Object.keys(INVENTORY).forEach(key => {
@@ -492,7 +469,7 @@
           if (avail === 0) {
             rowHtml += `<td class="p-2 border-b border-slate-200 bg-red-100 text-red-700 font-bold opacity-75 text-xs">${avail} / ${max}</td>`;
           } else {
-            rowHtml += `<td onclick="startBookingFromGrid('${slot}', '${key}')" class="p-2 border-b border-slate-200 bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold cursor-pointer active:scale-95 transition-all text-xs" title="Réserver ce créneau">➕ ${avail} dispo</td>`;
+            rowHtml += `<td onclick="startBookingFromGrid('${slot}', '${key}')" class="p-2 border-b border-slate-200 bg-emerald-100 active:bg-emerald-200 text-emerald-800 font-bold cursor-pointer transition-all text-xs" title="Réserver ce créneau">➕ ${avail} dispo</td>`;
           }
         });
 
@@ -519,7 +496,7 @@
         const dayLabel = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
 
         let dayHtml = `
-          <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+          <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50">
             <div class="flex justify-between items-center border-b pb-1.5 mb-2">
               <h3 class="font-black capitalize text-xs text-blue-700">${dayLabel}</h3>
               <span class="text-[10px] bg-blue-100 text-blue-800 font-bold px-2 py-0.5 rounded-full">${dayBookings.length} résa(s)</span>
@@ -538,12 +515,12 @@
               });
             }
             dayHtml += `
-              <div class="bg-white p-2 rounded-lg border text-xs flex justify-between items-center shadow-2xs">
+              <div class="bg-white p-2.5 rounded-xl border text-xs flex justify-between items-center shadow-xs">
                 <div>
                   <span class="font-bold text-slate-800">${b.slot}</span> — <span class="font-semibold">${b.client}</span>
                   <div class="text-[10px] text-slate-500">${itemsSummary.join(', ')}</div>
                 </div>
-                <span class="font-black text-emerald-600">${b.totalPrice}€</span>
+                <span class="font-black text-emerald-600 text-sm">${b.totalPrice}€</span>
               </div>
             `;
           });
@@ -555,7 +532,12 @@
       }
     }
 
-    function buildBookingsTableRows(dayBookings) {
+    // Affichage ergonomique en CARTES
+    function buildBookingsCards(dayBookings) {
+      if (dayBookings.length === 0) {
+        return `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs italic border border-slate-200">Aucune réservation saisie pour cette journée.</div>`;
+      }
+
       let html = '';
       dayBookings.forEach((b) => {
         let itemsSummary = [];
@@ -569,56 +551,50 @@
         const isPaid = (b.status === 'Réglé');
 
         html += `
-          <tr class="${b.returned ? 'bg-slate-50/50 opacity-75' : 'bg-white'}">
-            <td class="py-2.5 px-2 font-bold text-[11px] text-blue-900">${b.slot}</td>
-            <td class="py-2.5 px-2">
-              <div class="font-bold text-slate-800">${b.client}</div>
-              ${b.phone ? `<a href="tel:${b.phone}" class="text-[10px] text-blue-600 font-bold block">📞 ${b.phone}</a>` : ''}
-              ${b.usersNames ? `<div class="text-[9px] text-slate-500">Pratiquants: ${b.usersNames}</div>` : ''}
-              ${b.emergency ? `<div class="text-[9px] text-red-600 font-bold">🚨 Urgence: ${b.emergency}</div>` : ''}
-            </td>
-            <td class="py-2.5 px-2 text-[11px] font-medium">${itemsSummary.join(', ')}</td>
-            <td class="py-2.5 px-2 space-y-1">
-              
-              <div class="text-[10px] text-slate-600 font-semibold">
-                👤 Prise en charge: <span class="font-bold text-blue-700">${b.respNav || 'Non spécifié'}</span>
+          <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5 ${b.returned ? 'opacity-70 bg-slate-50' : ''}">
+            <div class="flex justify-between items-start">
+              <div>
+                <span class="inline-block bg-blue-100 text-blue-900 font-black text-xs px-2.5 py-1 rounded-lg border border-blue-200 mb-1">${b.slot}</span>
+                <h3 class="font-black text-sm text-slate-800 leading-tight">${b.client}</h3>
+                ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold block mt-0.5">📞 ${b.phone}</a>` : ''}
               </div>
+              <div class="text-right">
+                <span class="text-base font-black text-slate-800 block">${b.totalPrice} €</span>
+                <button data-id="${b.id}" data-status="${b.status}" class="toggle-paid text-[10px] font-bold px-2 py-1 rounded-lg ${isPaid ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
+                  ${isPaid ? '✅ Réglé' : '⏳ Non réglé'}
+                </button>
+              </div>
+            </div>
 
-              <div class="space-y-1">
+            <div class="bg-slate-50 p-2 rounded-xl text-xs space-y-1 border border-slate-100">
+              <div class="font-bold text-slate-700">🏄‍♂️ ${itemsSummary.join(', ')}</div>
+              ${b.usersNames ? `<div class="text-[11px] text-slate-600">👥 Participants: ${b.usersNames}</div>` : ''}
+              ${b.emergency ? `<div class="text-[10px] text-red-600 font-bold">🚨 Urgence: ${b.emergency}</div>` : ''}
+              <div class="text-[10px] text-slate-500 pt-0.5">👤 Prise en charge: <span class="font-bold text-blue-700">${b.respNav || 'N/A'}</span></div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1 border-t border-slate-100">
+              <div>
                 ${!slotStarted ? `
-                  <span class="inline-block text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded">
-                    ⏳ À venir
-                  </span>
+                  <span class="text-[11px] font-bold text-slate-500 bg-slate-100 border px-2.5 py-1 rounded-xl">⏳ À venir</span>
                 ` : `
-                  <label class="flex items-center gap-1.5 cursor-pointer">
-                    <input type="checkbox" ${b.returned ? 'checked' : ''} data-id="${b.id}" class="toggle-returned w-4 h-4 accent-emerald-600 rounded">
-                    <span class="text-[10px] font-bold ${b.returned ? 'text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded' : 'text-red-700 bg-red-100 px-1.5 py-0.5 rounded animate-pulse'}">
+                  <label class="flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
+                    <input type="checkbox" ${b.returned ? 'checked' : ''} data-id="${b.id}" class="toggle-returned w-5 h-5 accent-emerald-600 rounded">
+                    <span class="text-xs font-bold ${b.returned ? 'text-emerald-700' : 'text-red-700 animate-pulse'}">
                       ${b.returned ? '⚓ Rentré' : '🚨 Sur l\'eau'}
                     </span>
                   </label>
                 `}
-
-                ${b.returned && b.returnedBy ? `
-                  <div class="text-[9px] text-emerald-800 font-bold">
-                    ✓ Réceptionné par: ${b.returnedBy}
-                  </div>
-                ` : ''}
               </div>
 
-              <div class="pt-0.5">
-                <button data-id="${b.id}" data-status="${b.status}" class="toggle-paid text-[10px] font-bold px-1.5 py-0.5 rounded ${isPaid ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
-                  ${isPaid ? '✅ Réglé' : '⏳ Non réglé'} (${b.totalPrice}€)
-                </button>
+              <div class="flex gap-1.5">
+                <button data-id="${b.id}" class="edit-btn bg-blue-50 text-blue-700 font-bold text-xs px-3 py-1.5 rounded-xl border border-blue-200 active:bg-blue-100">✏️ Modifier</button>
+                <button data-id="${b.id}" class="delete-btn bg-red-50 text-red-600 font-bold text-xs px-2.5 py-1.5 rounded-xl border border-red-200 active:bg-red-100">🗑️</button>
               </div>
-
-            </td>
-            <td class="py-2.5 px-2 text-right">
-              <div class="flex flex-col sm:flex-row justify-end gap-1">
-                <button data-id="${b.id}" class="edit-btn bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[10px] px-2 py-1 rounded-lg border border-blue-200">✏️ Modifier</button>
-                <button data-id="${b.id}" class="delete-btn bg-red-50 text-red-600 hover:bg-red-100 font-bold text-[10px] px-2 py-1 rounded-lg border border-red-200">🗑️ Supprimer</button>
-              </div>
-            </td>
-          </tr>
+            </div>
+            
+            ${b.returned && b.returnedBy ? `<div class="text-[10px] text-emerald-800 font-bold text-right">✓ Réceptionné par: ${b.returnedBy}</div>` : ''}
+          </div>
         `;
       });
       return html;
@@ -644,16 +620,14 @@
         }
       });
 
-      // Injection dans le tableau de la vue Journée et la vue Grille
-      const tableRowsHtml = buildBookingsTableRows(dayBookings);
-      document.getElementById('bookings-table-day').innerHTML = tableRowsHtml;
-      document.getElementById('bookings-table-grid').innerHTML = tableRowsHtml;
+      const cardsHtml = buildBookingsCards(dayBookings);
+      document.getElementById('bookings-cards-day').innerHTML = cardsHtml;
+      document.getElementById('bookings-cards-grid').innerHTML = cardsHtml;
 
       document.getElementById('total-count').innerText = dayBookings.length;
       document.getElementById('total-on-water-count').innerText = onWaterCount;
       document.getElementById('total-revenue').innerText = `${totalRev} €`;
 
-      // Mise à jour du Panneau Interactif "Sur l'eau"
       const onWaterPanel = document.getElementById('on-water-panel');
       const onWaterList = document.getElementById('on-water-list');
 
@@ -667,24 +641,25 @@
             });
           }
           onWaterList.innerHTML += `
-            <div class="bg-blue-800/90 border border-blue-500 rounded-xl p-3 text-xs flex justify-between items-center shadow-md">
+            <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs flex justify-between items-center shadow-md">
               <div>
                 <span class="font-black text-amber-300 text-sm block">${b.client} ${b.phone ? `<a href="tel:${b.phone}" class="text-blue-200 text-xs underline">📞 ${b.phone}</a>` : ''}</span>
-                <span class="text-[11px] text-white font-bold block mt-0.5">${itemsArr.join(', ')}</span>
-                <span class="text-[9px] text-blue-200">Créneau: ${b.slot} • Resp Nav: ${b.respNav || 'N/A'}</span>
+                <span class="text-xs text-white font-bold block mt-0.5">${itemsArr.join(', ')}</span>
+                ${b.usersNames ? `<span class="text-[11px] text-slate-300 block">👥 ${b.usersNames}</span>` : ''}
+                <span class="text-[10px] text-slate-400">Créneau: ${b.slot} • Resp Nav: ${b.respNav || 'N/A'}</span>
               </div>
-              <div class="flex flex-col gap-1 items-end">
-                <button data-id="${b.id}" class="quick-return-btn bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black text-[10px] px-2.5 py-1.5 rounded-lg shadow">⚓ Valider Rentré</button>
-                <button data-id="${b.id}" class="edit-btn text-blue-200 hover:text-white font-bold text-[10px] underline">✏️ Edit</button>
+              <div class="flex flex-col gap-1.5 items-end">
+                <button data-id="${b.id}" class="quick-return-btn bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-white font-black text-xs px-3 py-2 rounded-xl shadow">⚓ Valider Rentré</button>
+                <button data-id="${b.id}" class="edit-btn text-blue-300 font-bold text-xs underline">✏️ Edit</button>
               </div>
             </div>
           `;
         });
       } else {
-        onWaterList.innerHTML = `<p class="text-xs text-blue-200 italic col-span-2">Aucun client actuellement sur l'eau.</p>`;
+        onWaterList.innerHTML = `<p class="text-xs text-slate-400 italic">Aucun client actuellement sur l'eau.</p>`;
       }
 
-      // Event Listeners Restitution depuis Panneau "Sur l'eau"
+      // Evénements
       document.querySelectorAll('.quick-return-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const docId = e.target.getAttribute('data-id');
@@ -694,7 +669,6 @@
         });
       });
 
-      // Event Listeners Tableaux
       document.querySelectorAll('.toggle-returned').forEach(chk => {
         chk.addEventListener('change', async (e) => {
           const docId = e.target.getAttribute('data-id');
@@ -760,6 +734,10 @@
       document.getElementById('edit-modal').classList.add('hidden');
     };
 
+    window.handleModalBackdropClick = function(e) {
+      if (e.target.id === 'edit-modal') closeEditModal();
+    };
+
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const docId = document.getElementById('edit-id').value;
@@ -811,12 +789,10 @@
       const selectedSlot = formSlotSelect.value;
       
       let respName = respSelect.value;
-      if (respName === '__NEW__') {
-        respName = respCustom.value.trim();
-      }
+      if (respName === '__NEW__') respName = respCustom.value.trim();
 
       if (!respName) {
-        alert("Veuillez choisir ou indiquer le membre de l'équipe qui prend en charge la réservation.");
+        alert("Veuillez choisir le responsable de la réservation.");
         return;
       }
 
@@ -829,7 +805,7 @@
         if (qty > 0) {
           const avail = getAvailableStock(selectedDate, selectedSlot, key);
           if (qty > avail) {
-            alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s) sur le créneau ${selectedSlot}.`);
+            alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`);
             return;
           }
           selectedItems[key] = qty;
