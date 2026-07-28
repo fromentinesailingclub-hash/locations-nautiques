@@ -25,8 +25,8 @@
           <span id="total-count" class="text-lg font-black">0</span>
         </div>
         <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
-          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">En mer 🚨</span>
-          <span id="on-water-count" class="text-lg font-black text-amber-300">0</span>
+          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Sur l'eau 🚨</span>
+          <span id="total-on-water-count" class="text-lg font-black text-amber-300">0</span>
         </div>
         <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
           <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Recettes</span>
@@ -34,6 +34,17 @@
         </div>
       </div>
     </header>
+
+    <!-- PANNEAU EN DIRECT : QUI EST SUR L'EAU ? -->
+    <section id="on-water-panel" class="bg-gradient-to-r from-blue-900 to-indigo-900 text-white rounded-2xl p-4 shadow-md hidden space-y-2">
+      <div class="flex justify-between items-center border-b border-blue-700/60 pb-2">
+        <h2 class="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
+          <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span> Actuellement "Sur l'eau"
+        </h2>
+        <span id="on-water-subtitle" class="text-[10px] font-bold text-blue-200"></span>
+      </div>
+      <div id="on-water-list" class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1"></div>
+    </section>
 
     <!-- Navigation Onglets -->
     <nav class="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200 overflow-x-auto no-scrollbar gap-1 text-xs font-bold">
@@ -62,7 +73,7 @@
             <select id="form-slot" class="w-full border-2 border-slate-200 rounded-xl p-2.5 text-sm font-bold bg-slate-50 focus:border-blue-500 outline-none"></select>
           </div>
 
-          <!-- Choix du Responsable de Navigation / Réservation -->
+          <!-- Choix du Responsable de Navigation -->
           <div>
             <label class="block text-[11px] font-bold text-slate-600 mb-1">Prise en charge par (Resp Nav) *</label>
             <select id="client-name-select" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm font-bold bg-white focus:ring-2 focus:ring-blue-500 outline-none">
@@ -71,7 +82,7 @@
             <input type="text" id="client-name-custom" placeholder="Saisir le nom du nouveau membre..." class="w-full border border-blue-400 rounded-xl p-2 text-sm mt-1.5 hidden bg-blue-50 focus:ring-2 focus:ring-blue-500 outline-none">
           </div>
 
-          <!-- Nom du Client Pratiquant principal -->
+          <!-- Nom du Client -->
           <div>
             <label class="block text-[11px] font-bold text-slate-600 mb-1">Nom du client / Pratiquant *</label>
             <input type="text" id="client-name" placeholder="ex: Jean Dupont" class="w-full border border-slate-300 rounded-xl p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
@@ -138,7 +149,7 @@
     <div id="view-grid" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
       <div class="flex justify-between items-center border-b pb-2">
         <h2 class="text-base font-black text-slate-800">Disponibilités Heure par Heure</h2>
-        <span class="text-[10px] font-bold text-slate-400">Vert = Dispo • Rouge = Complet</span>
+        <span class="text-[10px] font-bold text-slate-400">💡 Cliquez sur une case verte pour réserver</span>
       </div>
       <div class="overflow-x-auto">
         <table class="w-full text-center text-xs border-collapse">
@@ -261,33 +272,6 @@
       editSlotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
     });
 
-    Object.keys(INVENTORY).forEach(key => {
-      let optionsHtml = '';
-      for (let i = 0; i <= INVENTORY[key].max; i++) {
-        optionsHtml += `<option value="${i}">${i}</option>`;
-      }
-      eqContainer.innerHTML += `
-        <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border border-slate-200">
-          <div>
-            <span class="font-bold text-slate-800 block">${INVENTORY[key].name}</span>
-            <span class="text-slate-400 text-[10px]">${INVENTORY[key].price}€/h</span>
-          </div>
-          <select id="qty-${key}" class="border border-slate-300 rounded-lg px-3 py-1 font-black text-sm bg-slate-50 focus:ring-2 focus:ring-blue-500">
-            ${optionsHtml}
-          </select>
-        </div>
-      `;
-
-      editEqContainer.innerHTML += `
-        <div class="flex justify-between items-center text-xs bg-white p-1.5 rounded border">
-          <span class="font-bold text-slate-800">${INVENTORY[key].name}</span>
-          <select id="edit-qty-${key}" class="border rounded px-2 py-0.5 font-bold text-xs bg-slate-50">
-            ${optionsHtml}
-          </select>
-        </div>
-      `;
-    });
-
     respSelect.addEventListener('change', (e) => {
       if (e.target.value === '__NEW__') {
         respCustom.classList.remove('hidden');
@@ -299,6 +283,8 @@
       }
     });
 
+    formSlotSelect.addEventListener('change', updateEquipmentSelectors);
+
     onSnapshot(bookingsCol, (snapshot) => {
       bookings = [];
       snapshot.forEach(docSnap => {
@@ -306,6 +292,87 @@
       });
       renderAll();
     });
+
+    // Helper pour vérifier si un créneau a débuté
+    function hasSlotStarted(dateStr, slotStr) {
+      const now = new Date();
+      const todayStr = now.toISOString().split('T')[0];
+      
+      if (dateStr < todayStr) return true; // Date passée
+      if (dateStr > todayStr) return false; // Date future
+
+      // Même jour : comparer l'heure de début du créneau (ex "14:30")
+      const startTimeStr = slotStr.split(' - ')[0]; // ex: "14:30"
+      const [startHour, startMin] = startTimeStr.split(':').map(Number);
+      
+      const slotStartTime = new Date();
+      slotStartTime.setHours(startHour, startMin, 0, 0);
+
+      return now >= slotStartTime;
+    }
+
+    function getAvailableStock(date, slot, itemKey, excludeBookingId = null) {
+      let used = 0;
+      bookings
+        .filter(b => b.date === date && b.slot === slot && b.id !== excludeBookingId)
+        .forEach(b => {
+          if (b.items && b.items[itemKey]) {
+            used += b.items[itemKey];
+          }
+        });
+      return INVENTORY[itemKey].max - used;
+    }
+
+    function updateEquipmentSelectors(selectedKeyToIncrement = null) {
+      const selectedDate = dateInput.value;
+      const selectedSlot = formSlotSelect.value;
+
+      eqContainer.innerHTML = '';
+      editEqContainer.innerHTML = '';
+
+      Object.keys(INVENTORY).forEach(key => {
+        const avail = getAvailableStock(selectedDate, selectedSlot, key);
+        let optionsHtml = '';
+        
+        for (let i = 0; i <= avail; i++) {
+          optionsHtml += `<option value="${i}">${i}</option>`;
+        }
+
+        const isTarget = (selectedKeyToIncrement === key && avail > 0);
+
+        eqContainer.innerHTML += `
+          <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border border-slate-200">
+            <div>
+              <span class="font-bold text-slate-800 block">${INVENTORY[key].name}</span>
+              <span class="text-[10px] ${avail > 0 ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}">${avail} dispo (${INVENTORY[key].price}€/h)</span>
+            </div>
+            <select id="qty-${key}" class="border border-slate-300 rounded-lg px-3 py-1 font-black text-sm ${avail === 0 ? 'bg-slate-100 text-slate-400' : 'bg-slate-50 focus:ring-2 focus:ring-blue-500'}" ${avail === 0 ? 'disabled' : ''}>
+              ${optionsHtml}
+            </select>
+          </div>
+        `;
+
+        if (isTarget) {
+          setTimeout(() => {
+            const el = document.getElementById(`qty-${key}`);
+            if (el) el.value = 1;
+          }, 0);
+        }
+
+        let editOptionsHtml = '';
+        for (let i = 0; i <= INVENTORY[key].max; i++) {
+          editOptionsHtml += `<option value="${i}">${i}</option>`;
+        }
+        editEqContainer.innerHTML += `
+          <div class="flex justify-between items-center text-xs bg-white p-1.5 rounded border">
+            <span class="font-bold text-slate-800">${INVENTORY[key].name}</span>
+            <select id="edit-qty-${key}" class="border rounded px-2 py-0.5 font-bold text-xs bg-slate-50">
+              ${editOptionsHtml}
+            </select>
+          </div>
+        `;
+      });
+    }
 
     function updateRespSelectOptions() {
       const counts = {};
@@ -326,18 +393,6 @@
           respSelect.innerHTML += `<option value="${name}">${name} (${counts[name]} résa)</option>`;
         });
       }
-    }
-
-    function getAvailableStock(date, slot, itemKey, excludeBookingId = null) {
-      let used = 0;
-      bookings
-        .filter(b => b.date === date && b.slot === slot && b.id !== excludeBookingId)
-        .forEach(b => {
-          if (b.items && b.items[itemKey]) {
-            used += b.items[itemKey];
-          }
-        });
-      return INVENTORY[itemKey].max - used;
     }
 
     window.switchView = function(view) {
@@ -371,6 +426,13 @@
       }
     };
 
+    window.startBookingFromGrid = function(slot, itemKey) {
+      formSlotSelect.value = slot;
+      updateEquipmentSelectors(itemKey);
+      switchView('day');
+      document.getElementById('client-name').focus();
+    };
+
     function renderGrid() {
       const selectedDate = dateInput.value;
       const gridTable = document.getElementById('grid-dispo-table');
@@ -382,11 +444,12 @@
         Object.keys(INVENTORY).forEach(key => {
           const avail = getAvailableStock(selectedDate, slot, key);
           const max = INVENTORY[key].max;
-          let colorClass = "bg-emerald-100 text-emerald-800 font-bold";
-          if (avail === 0) colorClass = "bg-red-100 text-red-700 font-bold";
-          else if (avail < max) colorClass = "bg-amber-100 text-amber-800 font-bold";
-
-          rowHtml += `<td class="p-2 border ${colorClass} text-xs">${avail} / ${max}</td>`;
+          
+          if (avail === 0) {
+            rowHtml += `<td class="p-2 border bg-red-100 text-red-700 font-bold opacity-75 text-xs">${avail} / ${max}</td>`;
+          } else {
+            rowHtml += `<td onclick="startBookingFromGrid('${slot}', '${key}')" class="p-2 border bg-emerald-100 hover:bg-emerald-200 text-emerald-800 font-bold cursor-pointer active:scale-95 transition-all text-xs" title="Réserver ce créneau">➕ ${avail} dispo</td>`;
+          }
         });
 
         rowHtml += `</tr>`;
@@ -450,6 +513,8 @@
 
     function renderAll() {
       updateRespSelectOptions();
+      updateEquipmentSelectors();
+      
       const selectedDate = dateInput.value;
       const table = document.getElementById('bookings-table');
       table.innerHTML = '';
@@ -457,10 +522,18 @@
       
       let totalRev = 0;
       let onWaterCount = 0;
+      let activeOnWaterList = [];
 
       dayBookings.forEach((b) => {
         totalRev += b.totalPrice;
-        if (!b.returned) onWaterCount++;
+
+        const slotStarted = hasSlotStarted(b.date, b.slot);
+        const isOnWater = slotStarted && !b.returned;
+
+        if (isOnWater) {
+          onWaterCount++;
+          activeOnWaterList.push(b);
+        }
 
         let itemsSummary = [];
         if (b.items) {
@@ -483,19 +556,24 @@
             <td class="py-2.5 px-2 text-[11px] font-medium">${itemsSummary.join(', ')}</td>
             <td class="py-2.5 px-2 space-y-1">
               
-              <!-- Resp Nav Départ -->
               <div class="text-[10px] text-slate-600 font-semibold">
                 👤 Prise en charge: <span class="font-bold text-blue-700">${b.respNav || 'Non spécifié'}</span>
               </div>
 
-              <!-- Restitution matériel & Responsable Réception -->
+              <!-- Statut dynamique temporel : À venir / Sur l'eau / Rentré -->
               <div class="space-y-1">
-                <label class="flex items-center gap-1.5 cursor-pointer">
-                  <input type="checkbox" ${b.returned ? 'checked' : ''} data-id="${b.id}" class="toggle-returned w-4 h-4 accent-emerald-600 rounded">
-                  <span class="text-[10px] font-bold ${b.returned ? 'text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded' : 'text-red-700 bg-red-100 px-1.5 py-0.5 rounded animate-pulse'}">
-                    ${b.returned ? '⚓ Rentré' : '🚨 Sur l\'eau'}
+                ${!slotStarted ? `
+                  <span class="inline-block text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded">
+                    ⏳ À venir
                   </span>
-                </label>
+                ` : `
+                  <label class="flex items-center gap-1.5 cursor-pointer">
+                    <input type="checkbox" ${b.returned ? 'checked' : ''} data-id="${b.id}" class="toggle-returned w-4 h-4 accent-emerald-600 rounded">
+                    <span class="text-[10px] font-bold ${b.returned ? 'text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded' : 'text-red-700 bg-red-100 px-1.5 py-0.5 rounded animate-pulse'}">
+                      ${b.returned ? '⚓ Rentré' : '🚨 Sur l\'eau'}
+                    </span>
+                  </label>
+                `}
 
                 ${b.returned && b.returnedBy ? `
                   <div class="text-[9px] text-emerald-800 font-bold">
@@ -504,7 +582,6 @@
                 ` : ''}
               </div>
 
-              <!-- Paiement -->
               <div class="pt-0.5">
                 <button data-id="${b.id}" data-status="${b.status}" class="toggle-paid text-[10px] font-bold px-1.5 py-0.5 rounded ${isPaid ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
                   ${isPaid ? '✅ Réglé' : '⏳ Non réglé'} (${b.totalPrice}€)
@@ -522,11 +599,44 @@
         `;
       });
 
+      // Mettre à jour les compteurs
       document.getElementById('total-count').innerText = dayBookings.length;
-      document.getElementById('total-on-water-count')?.innerText = onWaterCount;
+      document.getElementById('total-on-water-count').innerText = onWaterCount;
       document.getElementById('total-revenue').innerText = `${totalRev} €`;
 
-      // Coche Retour Matériel avec demande du nom
+      // Mettre à jour le bloc "Qui est sur l'eau ?"
+      const onWaterPanel = document.getElementById('on-water-panel');
+      const onWaterList = document.getElementById('on-water-list');
+      const onWaterSubtitle = document.getElementById('on-water-subtitle');
+
+      if (onWaterCount > 0) {
+        onWaterPanel.classList.remove('hidden');
+        onWaterSubtitle.innerText = `${onWaterCount} embarcation(s) en mer`;
+        onWaterList.innerHTML = '';
+
+        activeOnWaterList.forEach(b => {
+          let itemsArr = [];
+          if (b.items) {
+            Object.keys(b.items).forEach(k => {
+              if (b.items[k] > 0) itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`);
+            });
+          }
+          onWaterList.innerHTML += `
+            <div class="bg-blue-800/80 border border-blue-600 rounded-xl p-2.5 text-xs flex justify-between items-center shadow-inner">
+              <div>
+                <span class="font-black text-amber-300 block">${b.client} ${b.phone ? `(${b.phone})` : ''}</span>
+                <span class="text-[11px] text-white font-medium block">${itemsArr.join(', ')}</span>
+                <span class="text-[9px] text-blue-200">Créneau: ${b.slot} • Resp: ${b.respNav || 'N/A'}</span>
+              </div>
+              <span class="text-[10px] font-black bg-red-600 text-white px-2 py-1 rounded-lg shadow uppercase tracking-wide">Sur l'eau</span>
+            </div>
+          `;
+        });
+      } else {
+        onWaterPanel.classList.add('hidden');
+      }
+
+      // Event Listeners
       document.querySelectorAll('.toggle-returned').forEach(chk => {
         chk.addEventListener('change', async (e) => {
           const docId = e.target.getAttribute('data-id');
@@ -586,7 +696,8 @@
 
       Object.keys(INVENTORY).forEach(key => {
         const qty = (b.items && b.items[key]) ? b.items[key] : 0;
-        document.getElementById(`edit-qty-${key}`).value = qty;
+        const el = document.getElementById(`edit-qty-${key}`);
+        if (el) el.value = qty;
       });
 
       document.getElementById('edit-modal').classList.remove('hidden');
@@ -702,12 +813,14 @@
       document.getElementById('users-names').value = '';
       document.getElementById('emergency-contact').value = '';
       document.getElementById('payment-status').value = 'Non réglé';
-      Object.keys(INVENTORY).forEach(key => {
-        document.getElementById(`qty-${key}`).value = 0;
-      });
+      
+      updateEquipmentSelectors();
     });
 
     dateInput.addEventListener('change', renderAll);
+    
+    // Rafraîchir l'affichage toutes les minutes pour recalculer automatiquement l'état temporel
+    setInterval(renderAll, 60000);
   </script>
 </body>
 </html>
