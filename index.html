@@ -27,13 +27,13 @@
       </div>
     </header>
 
-    <!-- Navigation Onglets (Jour / Semaine) -->
+    <!-- Navigation Onglets -->
     <div class="flex border-b border-slate-300">
       <button id="tab-day-btn" onclick="switchView('day')" class="py-2 px-4 font-bold border-b-2 border-blue-600 text-blue-600 text-sm">Vue Journée</button>
       <button id="tab-week-btn" onclick="switchView('week')" class="py-2 px-4 font-semibold text-slate-500 hover:text-slate-700 text-sm">Planning Semaine</button>
     </div>
 
-    <!-- Filtres & Sélection (Vue Jour) -->
+    <!-- Filtres & Sélection -->
     <section id="day-filters" class="bg-white rounded-xl p-4 shadow-sm border border-slate-200 flex flex-wrap gap-4 items-center justify-between">
       <div class="flex items-center gap-2 w-full sm:w-auto">
         <label for="filter-date" class="font-semibold text-slate-700 text-sm">Date :</label>
@@ -48,17 +48,15 @@
     <!-- VUE JOURNÉE -->
     <div id="view-day" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- Formulaire d'ajout Multi-Matériel -->
+      <!-- Formulaire d'ajout -->
       <section class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 lg:col-span-1 space-y-4">
         <h2 class="text-lg font-bold text-slate-700">Nouvelle Réservation</h2>
         <form id="booking-form" class="space-y-4">
-          
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Nom du responsable *</label>
             <input type="text" id="client-name" placeholder="ex: Jean Dupont" class="w-full border border-slate-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
           </div>
 
-          <!-- Champs optionnels Téléphone & Urgence -->
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label class="block text-[11px] font-semibold text-slate-500 mb-1">Téléphone client</label>
@@ -75,12 +73,9 @@
             <input type="text" id="emergency-contact" placeholder="Nom + N° Téléphone urgence" class="w-full border border-amber-300 rounded p-1.5 text-xs bg-white focus:ring-2 focus:ring-amber-500 outline-none">
           </div>
 
-          <!-- Choix multi-équipements avec Menus Déroulants pour mobile -->
           <div>
             <label class="block text-xs font-semibold text-slate-600 mb-2">Matériels à réserver :</label>
-            <div id="equipment-selection" class="space-y-3 bg-slate-50 p-3 rounded-lg border border-slate-200">
-              <!-- Injecté dynamiquement -->
-            </div>
+            <div id="equipment-selection" class="space-y-3 bg-slate-50 p-3 rounded-lg border border-slate-200"></div>
           </div>
 
           <div>
@@ -115,7 +110,7 @@
                   <th class="py-2 px-3">Équipements</th>
                   <th class="py-2 px-3">Prix</th>
                   <th class="py-2 px-3">Statut</th>
-                  <th class="py-2 px-3 text-right">Action</th>
+                  <th class="py-2 px-3 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody id="bookings-table" class="divide-y divide-slate-100"></tbody>
@@ -128,17 +123,73 @@
     <!-- VUE SEMAINE -->
     <div id="view-week" class="hidden bg-white rounded-xl p-5 shadow-sm border border-slate-200">
       <h2 class="text-lg font-bold text-slate-700 mb-4">Aperçu du Planning de la Semaine</h2>
-      <div id="week-container" class="space-y-4">
-        <!-- Contenu dynamique de la semaine -->
-      </div>
+      <div id="week-container" class="space-y-4"></div>
     </div>
 
+  </div>
+
+  <!-- MODAL DE MODIFICATION DE RÉSERVATION -->
+  <div id="edit-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-lg font-bold text-slate-800">Modifier la Réservation</h3>
+        <button onclick="closeEditModal()" class="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+      </div>
+      
+      <form id="edit-form" class="space-y-4">
+        <input type="hidden" id="edit-id">
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Créneau horaire</label>
+          <select id="edit-slot" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nom du responsable *</label>
+          <input type="text" id="edit-client-name" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Téléphone client</label>
+            <input type="tel" id="edit-client-phone" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-[11px] font-semibold text-slate-500 mb-1">Prénoms pratiquants</label>
+            <input type="text" id="edit-users-names" class="w-full border border-slate-300 rounded-lg p-2 text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+          </div>
+        </div>
+
+        <div class="bg-amber-50 p-2 rounded-lg border border-amber-200">
+          <label class="block text-[11px] font-bold text-amber-800 mb-1">Contact d'Urgence</label>
+          <input type="text" id="edit-emergency-contact" class="w-full border border-amber-300 rounded p-1.5 text-xs bg-white focus:ring-2 focus:ring-amber-500 outline-none">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-2">Quantités d'équipements :</label>
+          <div id="edit-equipment-selection" class="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200"></div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Statut Paiement</label>
+          <select id="edit-payment-status" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
+            <option value="Payé">Payé</option>
+            <option value="En attente">En attente</option>
+          </select>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button type="button" onclick="closeEditModal()" class="w-1/2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2.5 rounded-lg text-sm">Annuler</button>
+          <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 rounded-lg text-sm shadow">Enregistrer</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Intégration Firebase -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyB2c0RYApUY6wmrnJ2QJtqIVE1ZaIRJqPg",
@@ -174,13 +225,19 @@
 
     const dateInput = document.getElementById('filter-date');
     const slotSelect = document.getElementById('filter-slot');
+    const editSlotSelect = document.getElementById('edit-slot');
     const form = document.getElementById('booking-form');
+    const editForm = document.getElementById('edit-form');
     const eqContainer = document.getElementById('equipment-selection');
+    const editEqContainer = document.getElementById('edit-equipment-selection');
 
     dateInput.value = new Date().toISOString().split('T')[0];
-    SLOTS.forEach(slot => slotSelect.innerHTML += `<option value="${slot}">${slot}</option>`);
+    
+    SLOTS.forEach(slot => {
+      slotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
+      editSlotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
+    });
 
-    // Génération des menus déroulants pour les quantités (ergonomie mobile)
     Object.keys(INVENTORY).forEach(key => {
       let optionsHtml = '';
       for (let i = 0; i <= INVENTORY[key].max; i++) {
@@ -197,6 +254,15 @@
           </select>
         </div>
       `;
+
+      editEqContainer.innerHTML += `
+        <div class="flex justify-between items-center text-xs bg-white p-2 rounded border border-slate-200">
+          <span class="font-bold text-slate-800">${INVENTORY[key].name}</span>
+          <select id="edit-qty-${key}" class="border border-slate-300 rounded px-3 py-1 font-bold text-sm bg-slate-50">
+            ${optionsHtml}
+          </select>
+        </div>
+      `;
     });
 
     onSnapshot(bookingsCol, (snapshot) => {
@@ -207,10 +273,10 @@
       render();
     });
 
-    function getAvailableStock(date, slot, itemKey) {
+    function getAvailableStock(date, slot, itemKey, excludeBookingId = null) {
       let used = 0;
       bookings
-        .filter(b => b.date === date && b.slot === slot)
+        .filter(b => b.date === date && b.slot === slot && b.id !== excludeBookingId)
         .forEach(b => {
           if (b.items && b.items[itemKey]) {
             used += b.items[itemKey];
@@ -249,7 +315,6 @@
       let curr = new Date(dateInput.value);
       let weekDays = [];
       
-      // Trouver le lundi de la semaine sélectionnée
       let day = curr.getDay();
       let diff = curr.getDate() - day + (day === 0 ? -6 : 1);
       let monday = new Date(curr.setDate(diff));
@@ -350,7 +415,8 @@
             <td class="py-2.5 px-3">
               <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${b.status === 'Payé' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${b.status}</span>
             </td>
-            <td class="py-2.5 px-3 text-right">
+            <td class="py-2.5 px-3 text-right space-x-2">
+              <button data-id="${b.id}" class="edit-btn text-blue-600 hover:text-blue-800 text-xs font-bold">Modifier</button>
               <button data-id="${b.id}" class="delete-btn text-red-500 hover:text-red-700 text-xs font-bold">Supprimer</button>
             </td>
           </tr>
@@ -360,14 +426,92 @@
       document.getElementById('total-count').innerText = dayBookings.length;
       document.getElementById('total-revenue').innerText = `${totalRev} €`;
 
+      // Boutons Modifier & Supprimer
+      document.querySelectorAll('.edit-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => openEditModal(e.target.getAttribute('data-id')));
+      });
+
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const docId = e.target.getAttribute('data-id');
-          await deleteDoc(doc(db, 'bookings', docId));
+          if (confirm("Supprimer cette réservation ?")) {
+            await deleteDoc(doc(db, 'bookings', docId));
+          }
         });
       });
     }
 
+    // Modal de Modification
+    window.openEditModal = function(id) {
+      const b = bookings.find(item => item.id === id);
+      if (!b) return;
+
+      document.getElementById('edit-id').value = b.id;
+      document.getElementById('edit-slot').value = b.slot;
+      document.getElementById('edit-client-name').value = b.client || '';
+      document.getElementById('edit-client-phone').value = b.phone || '';
+      document.getElementById('edit-users-names').value = b.usersNames || '';
+      document.getElementById('edit-emergency-contact').value = b.emergency || '';
+      document.getElementById('edit-payment-status').value = b.status || 'Payé';
+
+      Object.keys(INVENTORY).forEach(key => {
+        const qty = (b.items && b.items[key]) ? b.items[key] : 0;
+        document.getElementById(`edit-qty-${key}`).value = qty;
+      });
+
+      document.getElementById('edit-modal').classList.remove('hidden');
+    };
+
+    window.closeEditModal = function() {
+      document.getElementById('edit-modal').classList.add('hidden');
+    };
+
+    // Soumission de la modification
+    editForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const docId = document.getElementById('edit-id').value;
+      const newSlot = document.getElementById('edit-slot').value;
+      const currentDate = dateInput.value;
+
+      let selectedItems = {};
+      let totalPrice = 0;
+      let totalQty = 0;
+
+      for (let key of Object.keys(INVENTORY)) {
+        const qty = parseInt(document.getElementById(`edit-qty-${key}`).value) || 0;
+        if (qty > 0) {
+          const avail = getAvailableStock(currentDate, newSlot, key, docId);
+          if (qty > avail) {
+            alert(`Stock insuffisant pour ${INVENTORY[key].name} sur le créneau ${newSlot} ! Seul(s) ${avail} disponible(s).`);
+            return;
+          }
+          selectedItems[key] = qty;
+          totalPrice += qty * INVENTORY[key].price;
+          totalQty += qty;
+        }
+      }
+
+      if (totalQty === 0) {
+        alert("Veuillez sélectionner au moins un matériel.");
+        return;
+      }
+
+      const bookingRef = doc(db, 'bookings', docId);
+      await updateDoc(bookingRef, {
+        slot: newSlot,
+        client: document.getElementById('edit-client-name').value,
+        phone: document.getElementById('edit-client-phone').value || '',
+        usersNames: document.getElementById('edit-users-names').value || '',
+        emergency: document.getElementById('edit-emergency-contact').value || '',
+        status: document.getElementById('edit-payment-status').value,
+        items: selectedItems,
+        totalPrice: totalPrice
+      });
+
+      closeEditModal();
+    });
+
+    // Formulaire de création
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       const selectedDate = dateInput.value;
