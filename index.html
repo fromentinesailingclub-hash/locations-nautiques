@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Base Nautique — Gestion Multi-Matériel & Créneaux</title>
+  <title>Base Nautique — Fromentine Sailing Club</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-4 md:p-8">
@@ -12,8 +12,8 @@
     <!-- En-tête -->
     <header class="bg-blue-600 text-white rounded-xl p-6 shadow-md flex flex-col md:flex-row justify-between items-center gap-4">
       <div>
-        <h1 class="text-2xl font-bold">Base Nautique — Gestion des Locations</h1>
-        <p class="text-blue-100 text-sm">Synchronisation multi-appareils • Créneaux de 1h</p>
+        <h1 class="text-2xl font-bold">Fromentine Sailing Club — Locations</h1>
+        <p class="text-blue-100 text-sm">Gestion des réservations en temps réel (Créneaux de 1h)</p>
       </div>
       <div class="flex gap-4 text-center">
         <div class="bg-blue-700 rounded-lg px-4 py-2">
@@ -106,7 +106,8 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-  const firebaseConfig = {
+    // Vos clés Firebase intégrées
+    const firebaseConfig = {
       apiKey: "AIzaSyB2c0RYApUY6wmrnJ2QJtqIVE1ZaIRJqPg",
       authDomain: "fromentine-sailing-club.firebaseapp.com",
       projectId: "fromentine-sailing-club",
@@ -128,16 +129,25 @@
       rescue: { name: "Rescue Board", max: 1, price: 15 }
     };
 
-    // Créneaux de 1H démarrant à 09h30
+    // Liste complète des créneaux de 1H (départs à l'heure pile ET à la demi-heure)
     const SLOTS = [
+      "09:00 - 10:00",
       "09:30 - 10:30",
+      "10:00 - 11:00",
       "10:30 - 11:30",
+      "11:00 - 12:00",
       "11:30 - 12:30",
+      "12:00 - 13:00",
       "12:30 - 13:30",
+      "13:00 - 14:00",
       "13:30 - 14:30",
+      "14:00 - 15:00",
       "14:30 - 15:30",
+      "15:00 - 16:00",
       "15:30 - 16:30",
+      "16:00 - 17:00",
       "16:30 - 17:30",
+      "17:00 - 18:00",
       "17:30 - 18:30"
     ];
 
@@ -162,7 +172,7 @@
       `;
     });
 
-    // Synchronisation Firebase en temps réel sur tous les appareils
+    // Synchronisation Firebase
     onSnapshot(bookingsCol, (snapshot) => {
       bookings = [];
       snapshot.forEach(docSnap => {
@@ -258,7 +268,6 @@
       let totalPrice = 0;
       let totalQty = 0;
 
-      // Vérification des stocks pour chaque article sélectionné
       for (let key of Object.keys(INVENTORY)) {
         const qty = parseInt(document.getElementById(`qty-${key}`).value) || 0;
         if (qty > 0) {
@@ -278,7 +287,6 @@
         return;
       }
 
-      // Envoi à Firebase
       await addDoc(bookingsCol, {
         date: selectedDate,
         slot: selectedSlot,
@@ -289,7 +297,6 @@
         createdAt: Date.now()
       });
 
-      // Réinitialisation du formulaire
       document.getElementById('client-name').value = '';
       Object.keys(INVENTORY).forEach(key => {
         document.getElementById(`qty-${key}`).value = 0;
