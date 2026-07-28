@@ -512,8 +512,8 @@
             </div>
 
             <div class="flex gap-2 pt-1">
-              <button onclick="approveRequest('${b.id}')" class="flex-1 bg-emerald-600 active:bg-emerald-700 text-white font-black text-xs py-3 rounded-xl shadow">
-                ✅ Valider & Bloquer Stock
+              <button onclick="approveRequest('${b.id}')" class="flex-1 ${stockOk ? 'bg-emerald-600 active:bg-emerald-700 text-white' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} font-black text-xs py-3 rounded-xl shadow">
+                ${stockOk ? '✅ Valider & Bloquer Stock' : '🚫 Stock Insuffisant'}
               </button>
               <button onclick="rejectRequest('${b.id}')" class="bg-red-100 text-red-700 active:bg-red-200 font-bold text-xs px-4 py-3 rounded-xl border border-red-300">
                 ❌ Refuser
@@ -524,9 +524,30 @@
       });
     }
 
-    // BOUTON ENVOI SMS PRÉ-REMPLI CHALEUREUX AVEC INDICATION DU RÈGLEMENT
+    // BOUTON ENVOI SMS ULTRA PRO, SYMPA ET EN FRANÇAIS
     window.sendSmsConfirmation = function(phone, clientName, dateStr, slotStr, itemsObj) {
-      let cleanName = clientName.replace(/^Demande:\s*/i, '');
+      // 1. Extraire le prénom propre
+      let rawName = clientName.replace(/^Demande:\s*/i, '').trim();
+      let parts = rawName.split(' ');
+      let firstName = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+      firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+
+      // 2. Formater la date en français (ex: "mercredi 29 juillet")
+      let formattedDate = dateStr;
+      try {
+        const [y, m, d] = dateStr.split('-');
+        const dateObj = new Date(y, parseInt(m) - 1, d);
+        formattedDate = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+      } catch (e) {}
+
+      // 3. Formater l'heure (ex: "de 09:00 à 10:00")
+      let formattedSlot = slotStr;
+      if (slotStr.includes(' - ')) {
+        const [start, end] = slotStr.split(' - ');
+        formattedSlot = `de ${start} à ${end}`;
+      }
+
+      // 4. Formater les matériels (ex: "1 Windsurf")
       let itemsArr = [];
       if (itemsObj) {
         Object.keys(itemsObj).forEach(k => {
@@ -535,13 +556,35 @@
       }
       const itemsText = itemsArr.length > 0 ? itemsArr.join(', ') : 'votre matériel';
 
-      const message = `Bonjour ${cleanName}, votre réservation pour ${itemsText} le ${dateStr} à ${slotStr} est confirmée ! On se retrouve sur la plage à la cabane du club. Le règlement se fera sur place (CB ou espèces). À très vite sur l'eau !`;
+      // 5. Message complet
+      const message = `Bonjour ${firstName}, votre réservation au Fromentine Sailing Club pour ${itemsText} le ${formattedDate} ${formattedSlot} est confirmée ! On se retrouve à la cabane du club sur la plage. Le règlement se fera directement sur place (CB ou espèces). À très vite sur l'eau !`;
+      
       const cleanPhone = phone.replace(/\s+/g, '');
       window.open(`sms:${cleanPhone}?body=${encodeURIComponent(message)}`, '_self');
     };
 
     window.approveRequest = async function(id) {
       const b = bookings.find(item => item.id === id);
+      if (!b) return;
+
+      // VÉRIFICATION STRICTE DU STOCK
+      let missingItems = [];
+      if (b.items) {
+        Object.keys(b.items).forEach(k => {
+          if (b.items[k] > 0) {
+            const avail = getAvailableStock(b.date, b.slot, k);
+            if (b.items[k] > avail) {
+              missingItems.push(`${INVENTORY[k].name} (Demandé: ${b.items[k]}, Dispo: ${avail})`);
+            }
+          }
+        });
+      }
+
+      if (missingItems.length > 0) {
+        alert(`❌ IMPOSSIBLE DE VALIDER :\nStock insuffisant pour ce créneau :\n- ` + missingItems.join('\n- '));
+        return;
+      }
+
       let resp = prompt("Indiquez le nom du responsable qui valide la demande :", respSelect.value !== '__NEW__' ? respSelect.value : '');
       if (!resp) resp = 'Équipe FSC';
 
@@ -550,7 +593,7 @@
         respNav: resp
       });
 
-      if (b && b.phone && confirm("Demande validée ! Souhaitez-vous envoyer un SMS de confirmation au client ?")) {
+      if (b.phone && confirm("Demande validée ! Souhaitez-vous envoyer un SMS de confirmation au client ?")) {
         sendSmsConfirmation(b.phone, b.client, b.date, b.slot, b.items);
       }
       renderAll();
@@ -672,7 +715,7 @@
                 <span class="inline-block bg-blue-100 text-blue-900 font-black text-xs px-2.5 py-1 rounded-lg border border-blue-200 mb-1">${b.slot}</span>
                 <h3 class="font-black text-sm text-slate-800 leading-tight">${b.client}</h3>
                 ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold inline-block mt-0.5 mr-2">📞 ${b.phone}</a>` : ''}
-                ${b.phone ? `<button onclick="sendSmsConfirmation('${b.phone}', '${b.client}', '${b.date}', '${b.slot}', ${itemsJson})" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300">📲 Envoyer SMS</button>` : ''}
+                ${b.phone ? `<button onclick="sendSmsConfirmation('${b.phone}', '${b.client}', '${b.date}', '${b.slot}', ${itemsJson})" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300 active:scale-95 transition-all">📲 Envoyer SMS</button>` : ''}
               </div>
               <div class="text-right">
                 <span class="text-base font-black text-slate-800 block">${b.totalPrice} €</span>
