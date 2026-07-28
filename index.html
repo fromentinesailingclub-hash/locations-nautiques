@@ -28,7 +28,7 @@
         </div>
       </div>
 
-      <!-- RACCOURCIS TACTILES GÉANTS -->
+      <!-- RACCOURSIS TACTILES GÉANTS -->
       <div class="grid grid-cols-3 gap-2 pt-1">
         <button onclick="scrollToBookings()" class="bg-blue-700/80 active:scale-95 transition-transform rounded-xl p-2 flex items-center justify-between border border-blue-400/40">
           <span class="text-[10px] font-bold text-blue-100">📋 Résas</span>
@@ -276,7 +276,7 @@
     const eqContainer = document.getElementById('equipment-selection');
     const editEqContainer = document.getElementById('edit-equipment-selection');
 
-    // FIXATION DE LA DATE DU JOUR LOCALE (Décalage horaire pris en compte)
+    // FIXATION DE LA DATE DU JOUR LOCALE
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -524,9 +524,18 @@
       });
     }
 
-    // BOUTON ENVOI SMS PRÉ-REMPLI
-    window.sendSmsConfirmation = function(phone, clientName, dateStr, slotStr, price) {
-      const message = `Bonjour ${clientName}, votre réservation au Fromentine Sailing Club pour le ${dateStr} à ${slotStr} (${price}€) est VALIDÉE ! À très vite sur la plage.`;
+    // BOUTON ENVOI SMS PRÉ-REMPLI CHALEUREUX AVEC CABANE ET MATÉRIELS
+    window.sendSmsConfirmation = function(phone, clientName, dateStr, slotStr, itemsObj) {
+      let cleanName = clientName.replace(/^Demande:\s*/i, '');
+      let itemsArr = [];
+      if (itemsObj) {
+        Object.keys(itemsObj).forEach(k => {
+          if (itemsObj[k] > 0) itemsArr.push(`${itemsObj[k]} ${INVENTORY[k].name}`);
+        });
+      }
+      const itemsText = itemsArr.length > 0 ? itemsArr.join(', ') : 'votre matériel';
+
+      const message = `Bonjour ${cleanName}, votre réservation pour ${itemsText} le ${dateStr} à ${slotStr} est confirmée ! On se retrouve sur la plage à la cabane du club. À très vite sur l'eau !`;
       const cleanPhone = phone.replace(/\s+/g, '');
       window.open(`sms:${cleanPhone}?body=${encodeURIComponent(message)}`, '_self');
     };
@@ -542,7 +551,7 @@
       });
 
       if (b && b.phone && confirm("Demande validée ! Souhaitez-vous envoyer un SMS de confirmation au client ?")) {
-        sendSmsConfirmation(b.phone, b.client, b.date, b.slot, b.totalPrice);
+        sendSmsConfirmation(b.phone, b.client, b.date, b.slot, b.items);
       }
       renderAll();
     };
@@ -654,6 +663,7 @@
 
         const slotStarted = hasSlotStarted(b.date, b.slot);
         const isPaid = (b.status === 'Réglé');
+        const itemsJson = JSON.stringify(b.items || {}).replace(/"/g, '&quot;');
 
         html += `
           <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5 ${b.returned ? 'opacity-70 bg-slate-50' : ''}">
@@ -662,7 +672,7 @@
                 <span class="inline-block bg-blue-100 text-blue-900 font-black text-xs px-2.5 py-1 rounded-lg border border-blue-200 mb-1">${b.slot}</span>
                 <h3 class="font-black text-sm text-slate-800 leading-tight">${b.client}</h3>
                 ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold inline-block mt-0.5 mr-2">📞 ${b.phone}</a>` : ''}
-                ${b.phone ? `<button onclick="sendSmsConfirmation('${b.phone}', '${b.client}', '${b.date}', '${b.slot}', '${b.totalPrice}')" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300">📲 Envoyer SMS</button>` : ''}
+                ${b.phone ? `<button onclick="sendSmsConfirmation('${b.phone}', '${b.client}', '${b.date}', '${b.slot}', ${itemsJson})" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300">📲 Envoyer SMS</button>` : ''}
               </div>
               <div class="text-right">
                 <span class="text-base font-black text-slate-800 block">${b.totalPrice} €</span>
