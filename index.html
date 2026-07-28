@@ -70,7 +70,7 @@
       <input type="date" id="filter-date" class="border-2 border-blue-500 rounded-xl p-2 text-sm font-bold text-blue-900 bg-blue-50 focus:outline-none flex-1 max-w-[220px]">
     </section>
 
-    <!-- VUE DEMANDES EN ATTENTE (NOUVEAU) -->
+    <!-- VUE DEMANDES EN ATTENTE -->
     <div id="view-requests" class="hidden space-y-3">
       <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
         <span>📩 Demandes de Réservation en Attente</span>
@@ -276,7 +276,12 @@
     const eqContainer = document.getElementById('equipment-selection');
     const editEqContainer = document.getElementById('edit-equipment-selection');
 
-    dateInput.value = new Date().toISOString().split('T')[0];
+    // FIXATION DE LA DATE DU JOUR LOCALE (Décalage horaire pris en compte)
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    dateInput.value = `${year}-${month}-${day}`;
 
     SLOTS.forEach(slot => {
       formSlotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
@@ -306,7 +311,11 @@
 
     function hasSlotStarted(dateStr, slotStr) {
       const now = new Date();
-      const todayStr = now.toISOString().split('T')[0];
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
+
       if (dateStr < todayStr) return true;
       if (dateStr > todayStr) return false;
 
@@ -456,7 +465,6 @@
       document.getElementById('client-name').focus();
     };
 
-    // Affichage des Demandes en attente reçues par le client
     function renderPendingRequests() {
       const list = document.getElementById('pending-requests-list');
       const pending = bookings.filter(b => b.status === 'EN_ATTENTE');
@@ -516,7 +524,15 @@
       });
     }
 
+    // BOUTON ENVOI SMS PRÉ-REMPLI
+    window.sendSmsConfirmation = function(phone, clientName, dateStr, slotStr, price) {
+      const message = `Bonjour ${clientName}, votre réservation au Fromentine Sailing Club pour le ${dateStr} à ${slotStr} (${price}€) est VALIDÉE ! À très vite sur la plage.`;
+      const cleanPhone = phone.replace(/\s+/g, '');
+      window.open(`sms:${cleanPhone}?body=${encodeURIComponent(message)}`, '_self');
+    };
+
     window.approveRequest = async function(id) {
+      const b = bookings.find(item => item.id === id);
       let resp = prompt("Indiquez le nom du responsable qui valide la demande :", respSelect.value !== '__NEW__' ? respSelect.value : '');
       if (!resp) resp = 'Équipe FSC';
 
@@ -524,7 +540,10 @@
         status: 'Non réglé',
         respNav: resp
       });
-      alert("Réservation validée et ajoutée au planning !");
+
+      if (b && b.phone && confirm("Demande validée ! Souhaitez-vous envoyer un SMS de confirmation au client ?")) {
+        sendSmsConfirmation(b.phone, b.client, b.date, b.slot, b.totalPrice);
+      }
       renderAll();
     };
 
@@ -571,7 +590,11 @@
       for (let i = 0; i < 7; i++) {
         let d = new Date(monday);
         d.setDate(monday.getDate() + i);
-        let dateStr = d.toISOString().split('T')[0];
+        
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const dayNum = String(d.getDate()).padStart(2, '0');
+        let dateStr = `${year}-${month}-${dayNum}`;
 
         const dayBookings = bookings.filter(b => b.date === dateStr && b.status !== 'EN_ATTENTE');
         const dayLabel = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
@@ -638,7 +661,8 @@
               <div>
                 <span class="inline-block bg-blue-100 text-blue-900 font-black text-xs px-2.5 py-1 rounded-lg border border-blue-200 mb-1">${b.slot}</span>
                 <h3 class="font-black text-sm text-slate-800 leading-tight">${b.client}</h3>
-                ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold block mt-0.5">📞 ${b.phone}</a>` : ''}
+                ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold inline-block mt-0.5 mr-2">📞 ${b.phone}</a>` : ''}
+                ${b.phone ? `<button onclick="sendSmsConfirmation('${b.phone}', '${b.client}', '${b.date}', '${b.slot}', '${b.totalPrice}')" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300">📲 Envoyer SMS</button>` : ''}
               </div>
               <div class="text-right">
                 <span class="text-base font-black text-slate-800 block">${b.totalPrice} €</span>
