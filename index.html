@@ -145,22 +145,24 @@
       </section>
     </div>
 
-    <!-- VUE 2 : GRILLE DES DISPONIBILITÉS PAR CRÉNEAUX -->
+    <!-- VUE 2 : GRILLE DES DISPONIBILITÉS PAR CRÉNEAUX (EN-TÊTE FIXE) -->
     <div id="view-grid" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
       <div class="flex justify-between items-center border-b pb-2">
         <h2 class="text-base font-black text-slate-800">Disponibilités Heure par Heure</h2>
         <span class="text-[10px] font-bold text-slate-400">💡 Cliquez sur une case verte pour réserver</span>
       </div>
-      <div class="overflow-x-auto">
+      
+      <!-- Conteneur avec défilement et en-tête fixe (sticky) -->
+      <div class="overflow-x-auto max-h-[70vh] overflow-y-auto rounded-xl border border-slate-200">
         <table class="w-full text-center text-xs border-collapse">
-          <thead>
-            <tr class="bg-slate-100 text-slate-700 font-bold text-[11px]">
-              <th class="p-2 text-left border">Créneau</th>
-              <th class="p-2 border">Windsurf (2)</th>
-              <th class="p-2 border">K. Double (2)</th>
-              <th class="p-2 border">K. Simple (1)</th>
-              <th class="p-2 border">Paddle (5)</th>
-              <th class="p-2 border">Rescue (1)</th>
+          <thead class="sticky top-0 bg-slate-800 text-white font-bold text-[11px] shadow-md z-10">
+            <tr>
+              <th class="p-2.5 text-left border-b border-slate-700 bg-slate-800">Créneau</th>
+              <th class="p-2.5 border-b border-slate-700 bg-slate-800">Windsurf (2)</th>
+              <th class="p-2.5 border-b border-slate-700 bg-slate-800">K. Double (2)</th>
+              <th class="p-2.5 border-b border-slate-700 bg-slate-800">K. Simple (1)</th>
+              <th class="p-2.5 border-b border-slate-700 bg-slate-800">Paddle (5)</th>
+              <th class="p-2.5 border-b border-slate-700 bg-slate-800">Rescue (1)</th>
             </tr>
           </thead>
           <tbody id="grid-dispo-table" class="divide-y divide-slate-200 font-medium"></tbody>
@@ -293,16 +295,14 @@
       renderAll();
     });
 
-    // Helper pour vérifier si un créneau a débuté
     function hasSlotStarted(dateStr, slotStr) {
       const now = new Date();
       const todayStr = now.toISOString().split('T')[0];
       
-      if (dateStr < todayStr) return true; // Date passée
-      if (dateStr > todayStr) return false; // Date future
+      if (dateStr < todayStr) return true;
+      if (dateStr > todayStr) return false;
 
-      // Même jour : comparer l'heure de début du créneau (ex "14:30")
-      const startTimeStr = slotStr.split(' - ')[0]; // ex: "14:30"
+      const startTimeStr = slotStr.split(' - ')[0];
       const [startHour, startMin] = startTimeStr.split(':').map(Number);
       
       const slotStartTime = new Date();
@@ -560,7 +560,6 @@
                 👤 Prise en charge: <span class="font-bold text-blue-700">${b.respNav || 'Non spécifié'}</span>
               </div>
 
-              <!-- Statut dynamique temporel : À venir / Sur l'eau / Rentré -->
               <div class="space-y-1">
                 ${!slotStarted ? `
                   <span class="inline-block text-[10px] font-bold text-slate-600 bg-slate-100 border border-slate-300 px-2 py-0.5 rounded">
@@ -599,12 +598,10 @@
         `;
       });
 
-      // Mettre à jour les compteurs
       document.getElementById('total-count').innerText = dayBookings.length;
       document.getElementById('total-on-water-count').innerText = onWaterCount;
       document.getElementById('total-revenue').innerText = `${totalRev} €`;
 
-      // Mettre à jour le bloc "Qui est sur l'eau ?"
       const onWaterPanel = document.getElementById('on-water-panel');
       const onWaterList = document.getElementById('on-water-list');
       const onWaterSubtitle = document.getElementById('on-water-subtitle');
@@ -636,7 +633,6 @@
         onWaterPanel.classList.add('hidden');
       }
 
-      // Event Listeners
       document.querySelectorAll('.toggle-returned').forEach(chk => {
         chk.addEventListener('change', async (e) => {
           const docId = e.target.getAttribute('data-id');
@@ -818,8 +814,6 @@
     });
 
     dateInput.addEventListener('change', renderAll);
-    
-    // Rafraîchir l'affichage toutes les minutes pour recalculer automatiquement l'état temporel
     setInterval(renderAll, 60000);
   </script>
 </body>
