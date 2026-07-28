@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fromentine Sailing Club — Plage & Locations</title>
+  <title>Fromentine Sailing Club — Plage & Sécurité</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    /* Optimisation défilement fluide pour mobile */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -18,12 +17,16 @@
     <header class="bg-blue-600 text-white rounded-2xl p-4 shadow-lg flex flex-col sm:flex-row justify-between items-center gap-3">
       <div class="text-center sm:text-left">
         <h1 class="text-xl font-black tracking-tight">Fromentine Sailing Club</h1>
-        <p class="text-blue-100 text-xs">Gestion & Disponibilités Plage</p>
+        <p class="text-blue-100 text-xs">Gestion & Sécurité Plage</p>
       </div>
       <div class="flex gap-2 w-full sm:w-auto text-center">
         <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
           <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Résa(s)</span>
           <span id="total-count" class="text-lg font-black">0</span>
+        </div>
+        <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
+          <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">En mer 🚨</span>
+          <span id="on-water-count" class="text-lg font-black text-amber-300">0</span>
         </div>
         <div class="bg-blue-700/80 rounded-xl px-3 py-1.5 flex-1">
           <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Recettes</span>
@@ -32,16 +35,16 @@
       </div>
     </header>
 
-    <!-- Barres d'onglets ergonomiques -->
+    <!-- Navigation Onglets -->
     <nav class="flex bg-white rounded-xl p-1 shadow-sm border border-slate-200 overflow-x-auto no-scrollbar gap-1 text-xs font-bold">
-      <button id="tab-day-btn" onclick="switchView('day')" class="flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white whitespace-nowrap transition-all text-center">➕ Réservation / Jour</button>
+      <button id="tab-day-btn" onclick="switchView('day')" class="flex-1 py-2.5 px-3 rounded-lg bg-blue-600 text-white whitespace-nowrap transition-all text-center">➕ Nouvelle Réservation</button>
       <button id="tab-grid-btn" onclick="switchView('grid')" class="flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center">📊 Dispo / Créneaux</button>
       <button id="tab-week-btn" onclick="switchView('week')" class="flex-1 py-2.5 px-3 rounded-lg text-slate-600 hover:bg-slate-100 whitespace-nowrap transition-all text-center">📅 Dispo / Semaine</button>
     </nav>
 
-    <!-- Bar de Filtre Date Unique -->
+    <!-- Filtre Date Unique -->
     <section class="bg-white rounded-xl p-3 shadow-sm border border-slate-200 flex items-center justify-between gap-3">
-      <label for="filter-date" class="font-bold text-slate-700 text-xs uppercase tracking-wider">Date choisie :</label>
+      <label for="filter-date" class="font-bold text-slate-700 text-xs uppercase tracking-wider">Date :</label>
       <input type="date" id="filter-date" class="border-2 border-blue-500 rounded-lg p-2 text-sm font-bold text-blue-900 bg-blue-50 focus:outline-none flex-1 max-w-[200px]">
     </section>
 
@@ -86,10 +89,10 @@
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Statut Paiement</label>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Statut Règlement</label>
             <select id="payment-status" class="w-full border border-slate-300 rounded-xl p-2 text-xs font-bold bg-white">
-              <option value="Payé">✅ Payé</option>
-              <option value="En attente">⏳ En attente</option>
+              <option value="Non réglé" selected>⏳ Non réglé (Par défaut)</option>
+              <option value="Réglé">✅ Réglé</option>
             </select>
           </div>
 
@@ -102,16 +105,16 @@
       <!-- Liste des Réservations -->
       <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 lg:col-span-2">
         <h2 class="text-base font-black text-slate-800 mb-3 flex items-center gap-2">
-          <span class="w-2 h-4 bg-emerald-500 rounded-full inline-block"></span> Planning du Jour
+          <span class="w-2 h-4 bg-emerald-500 rounded-full inline-block"></span> Suivi & Sécurité du Jour
         </h2>
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs text-slate-600">
             <thead class="bg-slate-100 text-slate-500 font-bold uppercase text-[10px]">
               <tr>
                 <th class="py-2 px-2">Heure</th>
-                <th class="py-2 px-2">Client / Contact</th>
+                <th class="py-2 px-2">Client / Urgence</th>
                 <th class="py-2 px-2">Matériel</th>
-                <th class="py-2 px-2">Prix</th>
+                <th class="py-2 px-2">Retour / Paiement</th>
                 <th class="py-2 px-2 text-right">Actions</th>
               </tr>
             </thead>
@@ -121,7 +124,7 @@
       </section>
     </div>
 
-    <!-- VUE 2 : GRILLE DES DISPONIBILITÉS PAR CRÉNEAUX (JOURNÉE) -->
+    <!-- VUE 2 : GRILLE DES DISPONIBILITÉS PAR CRÉNEAUX -->
     <div id="view-grid" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
       <div class="flex justify-between items-center border-b pb-2">
         <h2 class="text-base font-black text-slate-800">Disponibilités Heure par Heure</h2>
@@ -179,8 +182,8 @@
           <div id="edit-equipment-selection" class="space-y-1 bg-slate-50 p-2 rounded-xl border"></div>
         </div>
         <select id="edit-payment-status" class="w-full border rounded-xl p-2 text-xs font-bold">
-          <option value="Payé">Payé</option>
-          <option value="En attente">En attente</option>
+          <option value="Non réglé">⏳ Non réglé</option>
+          <option value="Réglé">✅ Réglé</option>
         </select>
         <div class="flex gap-2 pt-2">
           <button type="button" onclick="closeEditModal()" class="w-1/2 bg-slate-200 text-slate-700 font-bold py-2 rounded-xl text-xs">Annuler</button>
@@ -404,8 +407,12 @@
       const dayBookings = bookings.filter(b => b.date === selectedDate);
       
       let totalRev = 0;
+      let onWaterCount = 0;
+
       dayBookings.forEach((b) => {
         totalRev += b.totalPrice;
+        if (!b.returned) onWaterCount++;
+
         let itemsSummary = [];
         if (b.items) {
           Object.keys(b.items).forEach(k => {
@@ -413,28 +420,70 @@
           });
         }
 
+        const isPaid = (b.status === 'Réglé');
+
         table.innerHTML += `
-          <tr>
-            <td class="py-2 px-2 font-bold text-[11px] text-blue-900">${b.slot}</td>
-            <td class="py-2 px-2">
+          <tr class="${b.returned ? 'bg-slate-50/50 opacity-75' : 'bg-white'}">
+            <td class="py-2.5 px-2 font-bold text-[11px] text-blue-900">${b.slot}</td>
+            <td class="py-2.5 px-2">
               <div class="font-bold text-slate-800">${b.client}</div>
               ${b.phone ? `<a href="tel:${b.phone}" class="text-[10px] text-blue-600 font-bold block">📞 ${b.phone}</a>` : ''}
               ${b.usersNames ? `<div class="text-[9px] text-slate-500">Pratiquants: ${b.usersNames}</div>` : ''}
               ${b.emergency ? `<div class="text-[9px] text-red-600 font-bold">🚨 Urgence: ${b.emergency}</div>` : ''}
             </td>
-            <td class="py-2 px-2 text-[11px] font-medium">${itemsSummary.join(', ')}</td>
-            <td class="py-2 px-2 font-black text-slate-700">${b.totalPrice} €</td>
-            <td class="py-2 px-2 text-right space-x-1">
-              <button data-id="${b.id}" class="edit-btn text-blue-600 font-bold text-[11px]">Éditer</button>
-              <button data-id="${b.id}" class="delete-btn text-red-500 font-bold text-[11px]">X</button>
+            <td class="py-2.5 px-2 text-[11px] font-medium">${itemsSummary.join(', ')}</td>
+            <td class="py-2.5 px-2 space-y-1">
+              
+              <!-- Checkbox Restitution Matériel -->
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="checkbox" ${b.returned ? 'checked' : ''} data-id="${b.id}" class="toggle-returned w-4 h-4 accent-emerald-600 rounded">
+                <span class="text-[10px] font-bold ${b.returned ? 'text-emerald-700 bg-emerald-100 px-1.5 py-0.5 rounded' : 'text-red-700 bg-red-100 px-1.5 py-0.5 rounded animate-pulse'}">
+                  ${b.returned ? '⚓ Rentré' : '🚨 Sur l\'eau'}
+                </span>
+              </label>
+
+              <!-- Checkbox / Badge Paiement -->
+              <div class="flex items-center justify-between">
+                <button data-id="${b.id}" data-status="${b.status}" class="toggle-paid text-[10px] font-bold px-1.5 py-0.5 rounded ${isPaid ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
+                  ${isPaid ? '✅ Réglé' : '⏳ Non réglé'} (${b.totalPrice}€)
+                </button>
+              </div>
+
+            </td>
+            <td class="py-2.5 px-2 text-right">
+              <div class="flex flex-col sm:flex-row justify-end gap-1">
+                <button data-id="${b.id}" class="edit-btn bg-blue-50 text-blue-700 hover:bg-blue-100 font-bold text-[10px] px-2 py-1 rounded-lg border border-blue-200">✏️ Modifier</button>
+                <button data-id="${b.id}" class="delete-btn bg-red-50 text-red-600 hover:bg-red-100 font-bold text-[10px] px-2 py-1 rounded-lg border border-red-200">🗑️ Supprimer</button>
+              </div>
             </td>
           </tr>
         `;
       });
 
       document.getElementById('total-count').innerText = dayBookings.length;
+      document.getElementById('on-water-count').innerText = onWaterCount;
       document.getElementById('total-revenue').innerText = `${totalRev} €`;
 
+      // Event Listeners Restitution
+      document.querySelectorAll('.toggle-returned').forEach(chk => {
+        chk.addEventListener('change', async (e) => {
+          const docId = e.target.getAttribute('data-id');
+          const returned = e.target.checked;
+          await updateDoc(doc(db, 'bookings', docId), { returned: returned });
+        });
+      });
+
+      // Event Listeners Paiement
+      document.querySelectorAll('.toggle-paid').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const docId = e.target.getAttribute('data-id');
+          const currentStatus = e.target.getAttribute('data-status');
+          const newStatus = (currentStatus === 'Réglé') ? 'Non réglé' : 'Réglé';
+          await updateDoc(doc(db, 'bookings', docId), { status: newStatus });
+        });
+      });
+
+      // Modifier & Supprimer
       document.querySelectorAll('.edit-btn').forEach(btn => {
         btn.addEventListener('click', (e) => openEditModal(e.target.getAttribute('data-id')));
       });
@@ -442,7 +491,7 @@
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const docId = e.target.getAttribute('data-id');
-          if (confirm("Supprimer cette réservation ?")) {
+          if (confirm("Confirmer la suppression de cette réservation ?")) {
             await deleteDoc(doc(db, 'bookings', docId));
           }
         });
@@ -462,7 +511,7 @@
       document.getElementById('edit-client-phone').value = b.phone || '';
       document.getElementById('edit-users-names').value = b.usersNames || '';
       document.getElementById('edit-emergency-contact').value = b.emergency || '';
-      document.getElementById('edit-payment-status').value = b.status || 'Payé';
+      document.getElementById('edit-payment-status').value = b.status || 'Non réglé';
 
       Object.keys(INVENTORY).forEach(key => {
         const qty = (b.items && b.items[key]) ? b.items[key] : 0;
@@ -556,6 +605,7 @@
         usersNames: document.getElementById('users-names').value || '',
         emergency: document.getElementById('emergency-contact').value || '',
         status: document.getElementById('payment-status').value,
+        returned: false,
         items: selectedItems,
         totalPrice: totalPrice,
         createdAt: Date.now()
@@ -565,6 +615,7 @@
       document.getElementById('client-phone').value = '';
       document.getElementById('users-names').value = '';
       document.getElementById('emergency-contact').value = '';
+      document.getElementById('payment-status').value = 'Non réglé';
       Object.keys(INVENTORY).forEach(key => {
         document.getElementById(`qty-${key}`).value = 0;
       });
