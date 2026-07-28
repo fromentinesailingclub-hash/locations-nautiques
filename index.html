@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestion de Locations Nautiques</title>
+  <title>Base Nautique — Gestion Multi-Matériel & Créneaux</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-4 md:p-8">
@@ -13,7 +13,7 @@
     <header class="bg-blue-600 text-white rounded-xl p-6 shadow-md flex flex-col md:flex-row justify-between items-center gap-4">
       <div>
         <h1 class="text-2xl font-bold">Base Nautique — Gestion des Locations</h1>
-        <p class="text-blue-100 text-sm">Suivi des créneaux et des disponibilités en temps réel</p>
+        <p class="text-blue-100 text-sm">Synchronisation multi-appareils • Créneaux de 1h</p>
       </div>
       <div class="flex gap-4 text-center">
         <div class="bg-blue-700 rounded-lg px-4 py-2">
@@ -34,53 +34,51 @@
         <input type="date" id="filter-date" class="border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
       </div>
       <div class="flex items-center gap-3">
-        <label for="filter-slot" class="font-semibold text-slate-700">Créneau :</label>
+        <label for="filter-slot" class="font-semibold text-slate-700">Créneau (1h) :</label>
         <select id="filter-slot" class="border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></select>
       </div>
     </section>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       
-      <!-- Formulaire d'ajout -->
+      <!-- Formulaire d'ajout Multi-Matériel -->
       <section class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 lg:col-span-1">
         <h2 class="text-lg font-bold mb-4 text-slate-700">Nouvelle Réservation</h2>
         <form id="booking-form" class="space-y-4">
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Matériel</label>
-            <select id="item-select" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required></select>
-          </div>
-          <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Quantité</label>
-            <input type="number" id="item-qty" min="1" value="1" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
-            <span id="stock-warning" class="text-xs text-red-500 hidden mt-1 block"></span>
-          </div>
-          <div>
             <label class="block text-xs font-semibold text-slate-600 mb-1">Nom du client</label>
             <input type="text" id="client-name" placeholder="ex: Jean Dupont" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none" required>
           </div>
+
+          <!-- Choix multi-équipements -->
           <div>
-            <label class="block text-xs font-semibold text-slate-600 mb-1">Paiement</label>
+            <label class="block text-xs font-semibold text-slate-600 mb-2">Matériels à réserver :</label>
+            <div id="equipment-selection" class="space-y-2 bg-slate-50 p-3 rounded-lg border border-slate-200">
+              <!-- Injecté dynamiquement -->
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Statut Paiement</label>
             <select id="payment-status" class="w-full border border-slate-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
               <option value="Payé">Payé</option>
               <option value="En attente">En attente</option>
             </select>
           </div>
-          <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
+
+          <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 rounded-lg transition-colors text-sm">
             Valider la réservation
           </button>
         </form>
       </section>
 
-      <!-- Stocks & Liste -->
+      <!-- Stocks & Planning -->
       <div class="lg:col-span-2 space-y-6">
-        
-        <!-- Cartes de stock disponible sur le créneau -->
         <section class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
           <h2 class="text-sm font-bold uppercase text-slate-400 mb-3 tracking-wider">Disponibilités sur ce créneau</h2>
           <div id="stock-cards" class="grid grid-cols-2 sm:grid-cols-3 gap-3"></div>
         </section>
 
-        <!-- Liste des réservations du jour -->
         <section class="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
           <h2 class="text-lg font-bold mb-4 text-slate-700">Planning du jour</h2>
           <div class="overflow-x-auto">
@@ -88,10 +86,9 @@
               <thead class="bg-slate-50 text-slate-400 text-xs uppercase border-b border-slate-200">
                 <tr>
                   <th class="py-2 px-3">Créneau</th>
-                  <th class="py-2 px-3">Matériel</th>
-                  <th class="py-2 px-3">Qté</th>
                   <th class="py-2 px-3">Client</th>
-                  <th class="py-2 px-3">Prix</th>
+                  <th class="py-2 px-3">Équipements loués</th>
+                  <th class="py-2 px-3">Prix Total</th>
                   <th class="py-2 px-3">Statut</th>
                   <th class="py-2 px-3 text-right">Action</th>
                 </tr>
@@ -100,12 +97,29 @@
             </table>
           </div>
         </section>
-
       </div>
     </div>
   </div>
 
-  <script>
+  <!-- Intégration Firebase -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    // ⚠️ REMPLACE AVEC TES CLÉS FIREBASE S'IL Y A LIEU ⚠️
+    const firebaseConfig = {
+      apiKey: "VOTRE_API_KEY",
+      authDomain: "VOTRE_PROJECT.firebaseapp.com",
+      projectId: "VOTRE_PROJECT_ID",
+      storageBucket: "VOTRE_PROJECT.appspot.com",
+      messagingSenderId: "123456789",
+      appId: "1:123456789:web:abcdef"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const bookingsCol = collection(db, 'bookings');
+
     const INVENTORY = {
       windsurf: { name: "Windsurf", max: 2, price: 25 },
       kayak_double: { name: "Kayak Double", max: 2, price: 20 },
@@ -114,30 +128,58 @@
       rescue: { name: "Rescue Board", max: 1, price: 15 }
     };
 
-    const SLOTS = ["09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00", "12:00 - 13:00", "13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00", "16:00 - 17:00", "17:00 - 18:00"];
+    // Créneaux de 1H démarrant à 09h30
+    const SLOTS = [
+      "09:30 - 10:30",
+      "10:30 - 11:30",
+      "11:30 - 12:30",
+      "12:30 - 13:30",
+      "13:30 - 14:30",
+      "14:30 - 15:30",
+      "15:30 - 16:30",
+      "16:30 - 17:30",
+      "17:30 - 18:30"
+    ];
 
-    let bookings = JSON.parse(localStorage.getItem('nautical_bookings')) || [];
+    let bookings = [];
 
     const dateInput = document.getElementById('filter-date');
     const slotSelect = document.getElementById('filter-slot');
-    const itemSelect = document.getElementById('item-select');
-    const qtyInput = document.getElementById('item-qty');
     const form = document.getElementById('booking-form');
+    const eqContainer = document.getElementById('equipment-selection');
 
-    // Init Date & Slots
+    // Initialisation
     dateInput.value = new Date().toISOString().split('T')[0];
-    SLOTS.forEach(slot => {
-      slotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
+    SLOTS.forEach(slot => slotSelect.innerHTML += `<option value="${slot}">${slot}</option>`);
+
+    // Génération des inputs pour chaque équipement
+    Object.keys(INVENTORY).forEach(key => {
+      eqContainer.innerHTML += `
+        <div class="flex justify-between items-center text-xs">
+          <span class="font-medium text-slate-700">${INVENTORY[key].name} (${INVENTORY[key].price}€)</span>
+          <input type="number" id="qty-${key}" min="0" value="0" class="w-16 border border-slate-300 rounded px-2 py-1 text-center font-bold">
+        </div>
+      `;
     });
 
-    Object.keys(INVENTORY).forEach(key => {
-      itemSelect.innerHTML += `<option value="${key}">${INVENTORY[key].name} (${INVENTORY[key].price}€/h)</option>`;
+    // Synchronisation Firebase en temps réel sur tous les appareils
+    onSnapshot(bookingsCol, (snapshot) => {
+      bookings = [];
+      snapshot.forEach(docSnap => {
+        bookings.push({ id: docSnap.id, ...docSnap.data() });
+      });
+      render();
     });
 
     function getAvailableStock(date, slot, itemKey) {
-      const used = bookings
-        .filter(b => b.date === date && b.slot === slot && b.itemKey === itemKey)
-        .reduce((sum, b) => sum + b.qty, 0);
+      let used = 0;
+      bookings
+        .filter(b => b.date === date && b.slot === slot)
+        .forEach(b => {
+          if (b.items && b.items[itemKey]) {
+            used += b.items[itemKey];
+          }
+        });
       return INVENTORY[itemKey].max - used;
     }
 
@@ -145,7 +187,7 @@
       const selectedDate = dateInput.value;
       const selectedSlot = slotSelect.value;
 
-      // Stock Cards
+      // Cartes de Stock Disponibles
       const stockCards = document.getElementById('stock-cards');
       stockCards.innerHTML = '';
       Object.keys(INVENTORY).forEach(key => {
@@ -154,32 +196,41 @@
         stockCards.innerHTML += `
           <div class="border border-slate-200 rounded-lg p-3 text-center bg-slate-50">
             <span class="block text-xs font-semibold text-slate-500">${INVENTORY[key].name}</span>
-            <span class="text-lg font-bold ${avail === 0 ? 'text-red-500' : 'text-emerald-600'}">${avail} / ${max}</span>
+            <span class="text-lg font-bold ${avail <= 0 ? 'text-red-500' : 'text-emerald-600'}">${avail} / ${max}</span>
             <span class="block text-[10px] text-slate-400">dispo</span>
           </div>
         `;
       });
 
-      // Table
+      // Tableau du Planning
       const table = document.getElementById('bookings-table');
       table.innerHTML = '';
       const dayBookings = bookings.filter(b => b.date === selectedDate);
       
       let totalRev = 0;
-      dayBookings.forEach((b, index) => {
-        totalRev += b.price;
+      dayBookings.forEach((b) => {
+        totalRev += b.totalPrice;
+        
+        let itemsSummary = [];
+        if (b.items) {
+          Object.keys(b.items).forEach(k => {
+            if (b.items[k] > 0) {
+              itemsSummary.push(`${b.items[k]}x ${INVENTORY[k].name}`);
+            }
+          });
+        }
+
         table.innerHTML += `
           <tr>
             <td class="py-2 px-3 text-xs font-semibold">${b.slot}</td>
-            <td class="py-2 px-3">${INVENTORY[b.itemKey].name}</td>
-            <td class="py-2 px-3">${b.qty}</td>
-            <td class="py-2 px-3">${b.client}</td>
-            <td class="py-2 px-3 font-medium">${b.price} €</td>
+            <td class="py-2 px-3 font-medium">${b.client}</td>
+            <td class="py-2 px-3 text-xs">${itemsSummary.join(', ')}</td>
+            <td class="py-2 px-3 font-bold text-slate-700">${b.totalPrice} €</td>
             <td class="py-2 px-3">
               <span class="px-2 py-0.5 text-[10px] font-bold rounded-full ${b.status === 'Payé' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${b.status}</span>
             </td>
             <td class="py-2 px-3 text-right">
-              <button onclick="deleteBooking(${b.id})" class="text-red-500 hover:text-red-700 text-xs font-bold">Supprimer</button>
+              <button data-id="${b.id}" class="delete-btn text-red-500 hover:text-red-700 text-xs font-bold">Supprimer</button>
             </td>
           </tr>
         `;
@@ -187,43 +238,66 @@
 
       document.getElementById('total-count').innerText = dayBookings.length;
       document.getElementById('total-revenue').innerText = `${totalRev} €`;
-      localStorage.setItem('nautical_bookings', JSON.stringify(bookings));
+
+      // Boutons suppression
+      document.querySelectorAll('.delete-btn').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+          const docId = e.target.getAttribute('data-id');
+          await deleteDoc(doc(db, 'bookings', docId));
+        });
+      });
     }
 
-    form.addEventListener('submit', (e) => {
+    // Soumission du formulaire
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const itemKey = itemSelect.value;
-      const qty = parseInt(qtyInput.value);
-      const avail = getAvailableStock(dateInput.value, slotSelect.value, itemKey);
+      const selectedDate = dateInput.value;
+      const selectedSlot = slotSelect.value;
+      
+      let selectedItems = {};
+      let totalPrice = 0;
+      let totalQty = 0;
 
-      if (qty > avail) {
-        alert(`Stock insuffisant ! Seul(s) ${avail} ${INVENTORY[itemKey].name} disponible(s) sur ce créneau.`);
+      // Vérification des stocks pour chaque article sélectionné
+      for (let key of Object.keys(INVENTORY)) {
+        const qty = parseInt(document.getElementById(`qty-${key}`).value) || 0;
+        if (qty > 0) {
+          const avail = getAvailableStock(selectedDate, selectedSlot, key);
+          if (qty > avail) {
+            alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s) sur le créneau ${selectedSlot}.`);
+            return;
+          }
+          selectedItems[key] = qty;
+          totalPrice += qty * INVENTORY[key].price;
+          totalQty += qty;
+        }
+      }
+
+      if (totalQty === 0) {
+        alert("Veuillez sélectionner au moins un matériel.");
         return;
       }
 
-      bookings.push({
-        id: Date.now(),
-        date: dateInput.value,
-        slot: slotSelect.value,
-        itemKey: itemKey,
-        qty: qty,
+      // Envoi à Firebase
+      await addDoc(bookingsCol, {
+        date: selectedDate,
+        slot: selectedSlot,
         client: document.getElementById('client-name').value,
         status: document.getElementById('payment-status').value,
-        price: INVENTORY[itemKey].price * qty
+        items: selectedItems,
+        totalPrice: totalPrice,
+        createdAt: Date.now()
       });
 
+      // Réinitialisation du formulaire
       document.getElementById('client-name').value = '';
-      render();
+      Object.keys(INVENTORY).forEach(key => {
+        document.getElementById(`qty-${key}`).value = 0;
+      });
     });
-
-    function deleteBooking(id) {
-      bookings = bookings.filter(b => b.id !== id);
-      render();
-    }
 
     dateInput.addEventListener('change', render);
     slotSelect.addEventListener('change', render);
-    render();
   </script>
 </body>
 </html>
