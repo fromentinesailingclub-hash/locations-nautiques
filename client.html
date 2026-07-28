@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fromentine Sailing Club — Réservation</title>
+  <title>Fromentine Sailing Club — Demande de Réservation</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-3 sm:p-6">
@@ -15,12 +15,21 @@
       <p class="text-blue-100 text-xs">Formulaire de Demande de Location</p>
     </header>
 
-    <!-- Message de confirmation après envoi -->
+    <!-- ÉCRAN EN ATTENTE (S'affiche dès l'envoi) -->
+    <div id="pending-screen" class="hidden bg-amber-500 text-slate-900 rounded-2xl p-6 text-center shadow-xl space-y-3">
+      <div class="text-4xl animate-bounce">⏳</div>
+      <h2 class="text-lg font-black">Demande en cours de vérification</h2>
+      <p class="text-xs font-bold text-slate-900/80">L'équipe du club vérifie la disponibilité du matériel et valide votre réservation dans un instant...</p>
+      <div class="text-[10px] bg-amber-600/30 text-amber-950 font-bold p-2 rounded-xl">Ne fermez pas cette page, elle se mettra à jour automatiquement dès la validation !</div>
+    </div>
+
+    <!-- ÉCRAN DE VALIDATION EN TEMPS RÉEL -->
     <div id="success-screen" class="hidden bg-emerald-600 text-white rounded-2xl p-6 text-center shadow-xl space-y-3">
-      <div class="text-4xl">🎉</div>
-      <h2 class="text-lg font-black">Demande Envoyée !</h2>
-      <p class="text-xs text-emerald-100">Votre demande a bien été transmise à l'équipe du club. Nous la validons d'ici quelques minutes !</p>
-      <button onclick="window.location.reload()" class="mt-2 bg-white text-emerald-800 font-bold text-xs px-4 py-2 rounded-xl shadow">Faire une autre demande</button>
+      <div class="text-5xl">🎉</div>
+      <h2 class="text-xl font-black">RÉSERVATION VALIDÉE !</h2>
+      <p class="text-xs text-emerald-100">Votre réservation a été acceptée par l'équipe. Merci de vous présenter au comptoir quelques minutes avant votre créneau.</p>
+      <div id="confirmed-details" class="bg-emerald-700/80 p-3 rounded-xl text-left text-xs space-y-1 border border-emerald-500"></div>
+      <button onclick="window.location.reload()" class="mt-2 bg-white text-emerald-800 font-bold text-xs px-4 py-2.5 rounded-xl shadow active:scale-95 transition-all">Faire une autre demande</button>
     </div>
 
     <!-- Formulaire Client -->
@@ -94,7 +103,7 @@
 
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-    import { getFirestore, collection, addDoc } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    import { getFirestore, collection, addDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
     const firebaseConfig = {
       apiKey: "AIzaSyB2c0RYApUY6wmrnJ2QJtqIVE1ZaIRJqPg",
@@ -126,7 +135,12 @@
       "17:00 - 18:00", "17:30 - 18:30"
     ];
 
-    document.getElementById('date').value = new Date().toISOString().split('T')[0];
+    // FIXATION DE LA DATE DU JOUR LOCALE (Décalage horaire pris en compte)
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    document.getElementById('date').value = `${year}-${month}-${day}`;
 
     const slotSelect = document.getElementById('slot');
     SLOTS.forEach(s => slotSelect.innerHTML += `<option value="${s}">${s}</option>`);
@@ -149,6 +163,7 @@
       let selectedItems = {};
       let totalPrice = 0;
       let totalQty = 0;
+      let itemsSummary = [];
 
       Object.keys(INVENTORY).forEach(key => {
         const qty = parseInt(document.getElementById(`client-qty-${key}`).value) || 0;
@@ -156,6 +171,7 @@
           selectedItems[key] = qty;
           totalPrice += qty * INVENTORY[key].price;
           totalQty += qty;
+          itemsSummary.push(`${qty}x ${INVENTORY[key].name}`);
         }
       });
 
@@ -167,10 +183,12 @@
       const nom = document.getElementById('nom').value.trim();
       const prenom = document.getElementById('prenom').value.trim();
       const age = document.getElementById('age').value.trim();
+      const dateVal = document.getElementById('date').value;
+      const slotVal = document.getElementById('slot').value;
 
-      await addDoc(bookingsCol, {
-        date: document.getElementById('date').value,
-        slot: document.getElementById('slot').value,
+      const docRef = await addDoc(bookingsCol, {
+        date: dateVal,
+        slot: slotVal,
         respNav: 'En attente validation',
         client: `Demande: ${nom.toUpperCase()} ${prenom}`,
         phone: document.getElementById('phone').value,
@@ -183,8 +201,26 @@
         createdAt: Date.now()
       });
 
+      // Basculer vers l'écran d'attente
       document.getElementById('client-form').classList.add('hidden');
-      document.getElementById('success-screen').classList.remove('hidden');
+      document.getElementById('pending-screen').classList.remove('hidden');
+
+      // ÉCOUTEUR EN TEMPS RÉEL (Attend la validation Admin)
+      onSnapshot(doc(db, 'bookings', docRef.id), (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          if (data.status !== 'EN_ATTENTE') {
+            document.getElementById('pending-screen').classList.add('hidden');
+            document.getElementById('success-screen').classList.remove('hidden');
+            document.getElementById('confirmed-details').innerHTML = `
+              <div><strong>Client :</strong> ${nom.toUpperCase()} ${prenom}</div>
+              <div><strong>Date & Heure :</strong> ${data.date} à ${data.slot}</div>
+              <div><strong>Matériel :</strong> ${itemsSummary.join(', ')}</div>
+              <div><strong>Prix Total :</strong> ${data.totalPrice} €</div>
+            `;
+          }
+        }
+      });
     });
   </script>
 </body>
