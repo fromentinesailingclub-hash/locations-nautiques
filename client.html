@@ -15,7 +15,7 @@
       <p class="text-blue-100 text-xs">Formulaire de Demande de Location</p>
     </header>
 
-    <!-- ÉCRAN EN ATTENTE (S'affiche dès l'envoi) -->
+    <!-- ÉCRAN EN ATTENTE -->
     <div id="pending-screen" class="hidden bg-amber-500 text-slate-900 rounded-2xl p-6 text-center shadow-xl space-y-3">
       <div class="text-4xl animate-bounce">⏳</div>
       <h2 class="text-lg font-black">Demande en cours de vérification</h2>
@@ -28,7 +28,7 @@
       </div>
     </div>
 
-    <!-- ÉCRAN DE VALIDATION EN TEMPS RÉEL -->
+    <!-- ÉCRAN DE VALIDATION -->
     <div id="success-screen" class="hidden bg-emerald-600 text-white rounded-2xl p-6 text-center shadow-xl space-y-3">
       <div class="text-5xl">🎉</div>
       <h2 class="text-xl font-black">RÉSERVATION VALIDÉE !</h2>
@@ -41,7 +41,7 @@
     <form id="client-form" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
       
       <div class="space-y-3 border-b pb-3">
-        <h3 class="font-bold text-xs text-blue-600 uppercase tracking-wider">1. Vos Coordonnées</h3>
+        <h3 class="font-bold text-xs text-blue-600 uppercase tracking-wider">1. Responsable de la réservation</h3>
         
         <div class="grid grid-cols-2 gap-2">
           <div>
@@ -54,15 +54,9 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Âge *</label>
-            <input type="number" id="age" min="10" max="99" placeholder="ex: 35" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required>
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-600 mb-1">Téléphone *</label>
-            <input type="tel" id="phone" placeholder="06 12 34 56 78" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required>
-          </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Numéro de Téléphone *</label>
+          <input type="tel" id="phone" placeholder="06 12 34 56 78" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required>
         </div>
       </div>
 
@@ -89,8 +83,8 @@
         <h3 class="font-bold text-xs text-blue-600 uppercase tracking-wider">4. Pratiquants & Urgence</h3>
         
         <div>
-          <label class="block text-[11px] font-bold text-slate-600 mb-1">Noms des participants / pratiquants *</label>
-          <textarea id="participants" rows="2" placeholder="Saisissez les noms, prénoms et âges des pratiquants..." class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Noms, Prénoms & Âges des participants *</label>
+          <textarea id="participants" rows="2" placeholder="ex: Marc (35 ans), Lucas (12 ans)..." class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
         </div>
 
         <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
@@ -120,6 +114,10 @@
       measurementId: "G-NZ18JKK3PC"
     };
 
+    // CLÉS TELEGRAM NOTIFICATIONS
+    const TELEGRAM_BOT_TOKEN = "TON_TELEGRAM_BOT_TOKEN";
+    const TELEGRAM_CHAT_ID = "TON_TELEGRAM_CHAT_ID";
+
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const bookingsCol = collection(db, 'bookings');
@@ -140,7 +138,6 @@
       "17:00 - 18:00", "17:30 - 18:30"
     ];
 
-    // FIXATION DE LA DATE DU JOUR LOCALE
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -161,6 +158,18 @@
         </div>
       `;
     });
+
+    async function sendTelegramNotification(msg) {
+      if (TELEGRAM_BOT_TOKEN !== "TON_TELEGRAM_BOT_TOKEN") {
+        try {
+          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg, parse_mode: 'HTML' })
+          });
+        } catch (err) { console.error("Erreur Telegram:", err); }
+      }
+    }
 
     document.getElementById('client-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -187,17 +196,18 @@
 
       const nom = document.getElementById('nom').value.trim();
       const prenom = document.getElementById('prenom').value.trim();
-      const age = document.getElementById('age').value.trim();
+      const phoneVal = document.getElementById('phone').value.trim();
       const dateVal = document.getElementById('date').value;
       const slotVal = document.getElementById('slot').value;
+      const partVal = document.getElementById('participants').value.trim();
 
       const docRef = await addDoc(bookingsCol, {
         date: dateVal,
         slot: slotVal,
         respNav: 'En attente validation',
         client: `Demande: ${nom.toUpperCase()} ${prenom}`,
-        phone: document.getElementById('phone').value,
-        usersNames: `Auteur: ${prenom} (${age} ans) | Participants: ${document.getElementById('participants').value}`,
+        phone: phoneVal,
+        usersNames: partVal,
         emergency: document.getElementById('emergency').value,
         status: 'EN_ATTENTE',
         returned: false,
@@ -206,11 +216,13 @@
         createdAt: Date.now()
       });
 
-      // Basculer vers l'écran d'attente
+      // Notification Push Telegram
+      const tgMsg = `🚨 <b>NOUVELLE DEMANDE DE RÉSERVATION !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à ${slotVal}\n🏄‍♂️ <b>Matériel :</b> ${itemsSummary.join(', ')}\n👥 <b>Participants :</b> ${partVal}`;
+      sendTelegramNotification(tgMsg);
+
       document.getElementById('client-form').classList.add('hidden');
       document.getElementById('pending-screen').classList.remove('hidden');
 
-      // ÉCOUTEUR EN TEMPS RÉEL (Attend la validation Admin)
       onSnapshot(doc(db, 'bookings', docRef.id), (docSnap) => {
         if (docSnap.exists()) {
           const data = docSnap.data();
