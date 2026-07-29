@@ -14,13 +14,13 @@
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-2 sm:p-4 pb-24 select-none">
 
-  <!-- ÉCRAN DE VERROUILLAGE / MOT DE PASSE INTERNE -->
+  <!-- ÉCRAN DE VERROUILLAGE / MOT DE PASSE -->
   <div id="auth-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl border border-slate-700">
       <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto font-bold">🔒</div>
       <div>
-        <h2 class="text-lg font-black text-slate-900">Espace Responsables FSC</h2>
-        <p class="text-xs text-slate-500 mt-1">Saisissez le code d'accès réservé à l'équipe</p>
+        <h2 class="text-lg font-black text-slate-900">Espace Responsables</h2>
+        <p class="text-xs text-slate-500 mt-1">Saisissez le code d'accès fourni par le club</p>
       </div>
       <form id="auth-form" class="space-y-3">
         <input type="password" id="auth-password" placeholder="Mot de passe..." class="w-full text-center text-lg font-black tracking-widest border-2 border-slate-200 rounded-2xl p-3 outline-none focus:border-blue-600 bg-slate-50" required>
@@ -41,9 +41,9 @@
           <p class="text-blue-100 text-[11px]">Gestion & Sécurité Plage</p>
         </div>
         <div class="text-right flex items-center gap-2">
-          <div>
-            <span class="block text-[9px] uppercase tracking-wider text-blue-200 font-bold">Recettes du jour</span>
-            <span id="total-revenue" class="text-lg font-black text-emerald-300">0 €</span>
+          <div onclick="showDailySummary()" class="cursor-pointer bg-blue-700 hover:bg-blue-800 px-2.5 py-1 rounded-xl border border-blue-500">
+            <span class="block text-[8px] uppercase tracking-wider text-blue-200 font-bold">Recettes (Caisse)</span>
+            <span id="total-revenue" class="text-base font-black text-emerald-300">0 € 📊</span>
           </div>
           <button onclick="logout()" title="Déconnexion" class="bg-blue-800 p-2 rounded-xl text-xs font-bold text-blue-200 hover:text-white">🔒</button>
         </div>
@@ -190,7 +190,7 @@
             <thead>
               <tr>
                 <th class="sticky top-0 left-0 z-30 bg-slate-900 text-white p-2.5 text-left border-b border-r border-slate-700 font-bold text-[11px]">Créneau</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Windsurf (2)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Windsurfer LT (2)</th>
                 <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">K. Double (2)</th>
                 <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">K. Simple (1)</th>
                 <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Paddle (5)</th>
@@ -267,10 +267,8 @@
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
-    // 🔒 MOT DE PASSE D'ACCÈS POUR L'ÉQUIPE (Modifiable ici)
     const APP_PASSWORD = "FSC2026";
 
-    // AUTHENTIFICATION
     const authScreen = document.getElementById('auth-screen');
     const appContent = document.getElementById('app-content');
     const authForm = document.getElementById('auth-form');
@@ -320,7 +318,7 @@
     const bookingsCol = collection(db, 'bookings');
 
     const INVENTORY = {
-      windsurf: { name: "Windsurf", max: 2, price: 25 },
+      windsurf: { name: "Windsurfer LT", max: 2, price: 30 },
       kayak_double: { name: "Kayak Double", max: 2, price: 20 },
       kayak_simple: { name: "Kayak Simple", max: 1, price: 15 },
       paddle: { name: "Paddle", max: 5, price: 15 },
@@ -404,7 +402,6 @@
       renderAll();
     });
 
-    // 📊 MOTEUR D'EXTRACTION CSV
     function generateCsvData(bookingList) {
       let csvRows = [];
       csvRows.push(["Date", "Créneau", "Client", "Téléphone", "Prise en charge", "Matériels", "Pratiquants", "Urgence", "Statut Paiement", "Prix", "Statut Mer"].join(";"));
@@ -483,7 +480,7 @@
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
       const todayStr = `${year}-${month}-${day}`;
 
       if (dateStr < todayStr) return true;
@@ -495,6 +492,25 @@
       slotStartTime.setHours(startHour, startMin, 0, 0);
 
       return now >= slotStartTime;
+    }
+
+    // Détection des retards (+15min après la fin du créneau)
+    function isOverdue(dateStr, slotStr) {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const todayStr = `${year}-${month}-${day}`;
+
+      if (dateStr < todayStr) return true;
+      if (dateStr > todayStr) return false;
+
+      const endTimeStr = slotStr.split(' - ')[1];
+      const [endHour, endMin] = endTimeStr.split(':').map(Number);
+      const slotEndTime = new Date();
+      slotEndTime.setHours(endHour, endMin + 15, 0, 0); // +15 min de tolérance
+
+      return now > slotEndTime;
     }
 
     function getAvailableStock(date, slot, itemKey, excludeBookingId = null) {
@@ -578,6 +594,36 @@
         });
       }
     }
+
+    window.showDailySummary = function() {
+      const selectedDate = dateInput.value;
+      const dayBookings = bookings.filter(b => b.date === selectedDate && b.status !== 'EN_ATTENTE');
+      
+      let total = 0;
+      let totalPaid = 0;
+      let totalUnpaid = 0;
+      let summaryByEq = {};
+
+      Object.keys(INVENTORY).forEach(k => summaryByEq[k] = 0);
+
+      dayBookings.forEach(b => {
+        total += b.totalPrice;
+        if (b.status === 'Réglé') totalPaid += b.totalPrice;
+        else totalUnpaid += b.totalPrice;
+
+        if (b.items) {
+          Object.keys(b.items).forEach(k => {
+            if (b.items[k] > 0) summaryByEq[k] += b.items[k];
+          });
+        }
+      });
+
+      let eqDetails = Object.keys(INVENTORY)
+        .map(k => `- ${INVENTORY[k].name} : ${summaryByEq[k]} loué(s)`)
+        .join('\n');
+
+      alert(`📊 RÉCAPITULATIF CAISSE DU ${selectedDate}\n\n💰 Recettes Totales : ${total} €\n✅ Réglé (En caisse) : ${totalPaid} €\n⏳ Non réglé : ${totalUnpaid} €\n\n🏄‍♂️ MATÉRIELS LOUÉS :\n${eqDetails}`);
+    };
 
     window.switchView = function(view) {
       const dayView = document.getElementById('view-day');
@@ -694,7 +740,6 @@
       });
     }
 
-    // BOUTON ENVOI SMS CHALEUREUX AVEC DATE EN FRANÇAIS ET PRÉNOM
     window.sendSmsConfirmation = function(phone, clientName, dateStr, slotStr, itemsObj) {
       let rawName = clientName.replace(/^Demande:\s*/i, '').trim();
       let parts = rawName.split(' ');
@@ -869,11 +914,12 @@
         }
 
         const slotStarted = hasSlotStarted(b.date, b.slot);
+        const lateAlert = (!b.returned && isOverdue(b.date, b.slot));
         const isPaid = (b.status === 'Réglé');
         const itemsJson = JSON.stringify(b.items || {}).replace(/"/g, '&quot;');
 
         html += `
-          <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200 space-y-2.5 ${b.returned ? 'opacity-70 bg-slate-50' : ''}">
+          <div class="bg-white rounded-2xl p-3.5 shadow-sm border-2 ${lateAlert ? 'border-red-500 bg-red-50/50 animate-pulse' : 'border-slate-200'} space-y-2.5 ${b.returned ? 'opacity-70 bg-slate-50 border-slate-200' : ''}">
             <div class="flex justify-between items-start">
               <div>
                 <span class="inline-block bg-blue-100 text-blue-900 font-black text-xs px-2.5 py-1 rounded-lg border border-blue-200 mb-1">${b.slot}</span>
@@ -903,8 +949,8 @@
                 ` : `
                   <label class="flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
                     <input type="checkbox" ${b.returned ? 'checked' : ''} data-id="${b.id}" class="toggle-returned w-5 h-5 accent-emerald-600 rounded">
-                    <span class="text-xs font-bold ${b.returned ? 'text-emerald-700' : 'text-red-700 animate-pulse'}">
-                      ${b.returned ? '⚓ Rentré' : '🚨 Sur l\'eau'}
+                    <span class="text-xs font-bold ${b.returned ? 'text-emerald-700' : (lateAlert ? 'text-red-600 font-black animate-ping' : 'text-red-700')}">
+                      ${b.returned ? '⚓ Rentré' : (lateAlert ? '⚠️ RETARD EN MER' : '🚨 Sur l\'eau')}
                     </span>
                   </label>
                 `}
@@ -954,7 +1000,7 @@
 
       document.getElementById('total-count').innerText = dayBookings.filter(b => b.status !== 'EN_ATTENTE').length;
       document.getElementById('total-on-water-count').innerText = onWaterCount;
-      document.getElementById('total-revenue').innerText = `${totalRev} €`;
+      document.getElementById('total-revenue').innerText = `${totalRev} € 📊`;
 
       const onWaterPanel = document.getElementById('on-water-panel');
       const onWaterList = document.getElementById('on-water-list');
@@ -968,13 +1014,15 @@
               if (b.items[k] > 0) itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`);
             });
           }
+          const late = isOverdue(b.date, b.slot);
+
           onWaterList.innerHTML += `
-            <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs flex justify-between items-center shadow-md">
+            <div class="bg-slate-800 border ${late ? 'border-red-500 bg-red-950/40' : 'border-slate-700'} rounded-xl p-3 text-xs flex justify-between items-center shadow-md">
               <div>
                 <span class="font-black text-amber-300 text-sm block">${b.client} ${b.phone ? `<a href="tel:${b.phone}" class="text-blue-200 text-xs underline">📞 ${b.phone}</a>` : ''}</span>
                 <span class="text-xs text-white font-bold block mt-0.5">${itemsArr.join(', ')}</span>
                 ${b.usersNames ? `<span class="text-[11px] text-slate-300 block">👥 ${b.usersNames}</span>` : ''}
-                <span class="text-[10px] text-slate-400">Créneau: ${b.slot} • Resp Nav: ${b.respNav || 'N/A'}</span>
+                <span class="text-[10px] ${late ? 'text-red-400 font-bold' : 'text-slate-400'}">Créneau: ${b.slot} ${late ? '⚠️ RETARD' : ''} • Resp Nav: ${b.respNav || 'N/A'}</span>
               </div>
               <div class="flex flex-col gap-1.5 items-end">
                 <button data-id="${b.id}" class="quick-return-btn bg-emerald-500 text-white font-black text-xs px-3 py-2 rounded-xl shadow">⚓ Valider Rentré</button>
@@ -1175,7 +1223,7 @@
     });
 
     dateInput.addEventListener('change', renderAll);
-    setInterval(renderAll, 60000);
+    setInterval(renderAll, 30000); // Mise à jour automatique toutes les 30 sec
   </script>
 </body>
 </html>
