@@ -265,6 +265,7 @@
     ];
 
     let bookings = [];
+    let previousPendingCount = -1;
 
     const dateInput = document.getElementById('filter-date');
     const formSlotSelect = document.getElementById('form-slot');
@@ -276,7 +277,6 @@
     const eqContainer = document.getElementById('equipment-selection');
     const editEqContainer = document.getElementById('edit-equipment-selection');
 
-    // FIXATION DE LA DATE DU JOUR LOCALE
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
@@ -301,11 +301,36 @@
 
     formSlotSelect.addEventListener('change', updateEquipmentSelectors);
 
+    // DÉTECTION SONORE DE DEMANDE
+    function playNotificationSound() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+      } catch(e) {}
+    }
+
     onSnapshot(bookingsCol, (snapshot) => {
       bookings = [];
       snapshot.forEach(docSnap => {
         bookings.push({ id: docSnap.id, ...docSnap.data() });
       });
+
+      const currentPendingCount = bookings.filter(b => b.status === 'EN_ATTENTE').length;
+      if (previousPendingCount !== -1 && currentPendingCount > previousPendingCount) {
+        playNotificationSound();
+      }
+      previousPendingCount = currentPendingCount;
+
       renderAll();
     });
 
@@ -524,15 +549,12 @@
       });
     }
 
-    // BOUTON ENVOI SMS ULTRA PRO, SYMPA ET EN FRANÇAIS
     window.sendSmsConfirmation = function(phone, clientName, dateStr, slotStr, itemsObj) {
-      // 1. Extraire le prénom propre
       let rawName = clientName.replace(/^Demande:\s*/i, '').trim();
       let parts = rawName.split(' ');
       let firstName = parts.length > 1 ? parts[parts.length - 1] : parts[0];
       firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
 
-      // 2. Formater la date en français (ex: "mercredi 29 juillet")
       let formattedDate = dateStr;
       try {
         const [y, m, d] = dateStr.split('-');
@@ -540,14 +562,12 @@
         formattedDate = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
       } catch (e) {}
 
-      // 3. Formater l'heure (ex: "de 09:00 à 10:00")
       let formattedSlot = slotStr;
       if (slotStr.includes(' - ')) {
         const [start, end] = slotStr.split(' - ');
         formattedSlot = `de ${start} à ${end}`;
       }
 
-      // 4. Formater les matériels (ex: "1 Windsurf")
       let itemsArr = [];
       if (itemsObj) {
         Object.keys(itemsObj).forEach(k => {
@@ -556,7 +576,6 @@
       }
       const itemsText = itemsArr.length > 0 ? itemsArr.join(', ') : 'votre matériel';
 
-      // 5. Message complet
       const message = `Bonjour ${firstName}, votre réservation au Fromentine Sailing Club pour ${itemsText} le ${formattedDate} ${formattedSlot} est confirmée ! On se retrouve à la cabane du club sur la plage. Le règlement se fera directement sur place (CB ou espèces). À très vite sur l'eau !`;
       
       const cleanPhone = phone.replace(/\s+/g, '');
@@ -567,7 +586,6 @@
       const b = bookings.find(item => item.id === id);
       if (!b) return;
 
-      // VÉRIFICATION STRICTE DU STOCK
       let missingItems = [];
       if (b.items) {
         Object.keys(b.items).forEach(k => {
