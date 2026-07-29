@@ -114,9 +114,9 @@
       measurementId: "G-NZ18JKK3PC"
     };
 
-    // CLÉS TELEGRAM NOTIFICATIONS
-    const TELEGRAM_BOT_TOKEN = "TON_TELEGRAM_BOT_TOKEN";
-    const TELEGRAM_CHAT_ID = "TON_TELEGRAM_CHAT_ID";
+    // CLÉS TELEGRAM PRÉ-REMPLIES
+    const TELEGRAM_BOT_TOKEN = "8777397757:AAHymn1Lylrb0_KVYSmL9vfj9RPKYnV5mDI";
+    const TELEGRAM_CHAT_ID = "6641751783";
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
@@ -160,15 +160,13 @@
     });
 
     async function sendTelegramNotification(msg) {
-      if (TELEGRAM_BOT_TOKEN !== "TON_TELEGRAM_BOT_TOKEN") {
-        try {
-          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg, parse_mode: 'HTML' })
-          });
-        } catch (err) { console.error("Erreur Telegram:", err); }
-      }
+      try {
+        await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text: msg, parse_mode: 'HTML' })
+        });
+      } catch (err) { console.error("Erreur Telegram:", err); }
     }
 
     document.getElementById('client-form').addEventListener('submit', async (e) => {
@@ -216,7 +214,7 @@
         createdAt: Date.now()
       });
 
-      // Notification Push Telegram
+      // Notification Push Telegram immédiate
       const tgMsg = `🚨 <b>NOUVELLE DEMANDE DE RÉSERVATION !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à ${slotVal}\n🏄‍♂️ <b>Matériel :</b> ${itemsSummary.join(', ')}\n👥 <b>Participants :</b> ${partVal}`;
       sendTelegramNotification(tgMsg);
 
