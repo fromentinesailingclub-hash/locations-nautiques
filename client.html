@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fromentine Sailing Club — Demande de Réservation</title>
+  <title>Fromentine Sailing Club — Demande de Location</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-3 sm:p-6">
@@ -77,6 +77,12 @@
       <div class="space-y-3 border-b pb-3">
         <h3 class="font-bold text-xs text-blue-600 uppercase tracking-wider">3. Matériels souhaités</h3>
         <div id="equipment-list" class="space-y-2"></div>
+        
+        <!-- Calculateur de prix en temps réel -->
+        <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 flex justify-between items-center mt-2">
+          <span class="text-xs font-bold text-blue-900">Montant total estimé :</span>
+          <span id="live-total-price" class="text-lg font-black text-blue-700">0 €</span>
+        </div>
       </div>
 
       <div class="space-y-3">
@@ -114,7 +120,6 @@
       measurementId: "G-NZ18JKK3PC"
     };
 
-    // VRAI TOKEN DE MÊME CASE QUE TELEGRAM
     const TELEGRAM_BOT_TOKEN = "8777397757:AAHymn1LylrbO_KVYSmL9vfj9RPKYnV5mDI";
     const TELEGRAM_CHAT_ID = "6641751783";
 
@@ -123,7 +128,7 @@
     const bookingsCol = collection(db, 'bookings');
 
     const INVENTORY = {
-      windsurf: { name: "Windsurf", max: 2, price: 25 },
+      windsurf: { name: "Windsurfer LT", max: 2, price: 30 },
       kayak_double: { name: "Kayak Double", max: 2, price: 20 },
       kayak_simple: { name: "Kayak Simple", max: 1, price: 15 },
       paddle: { name: "Paddle", max: 5, price: 15 },
@@ -138,14 +143,48 @@
       "17:00 - 18:00", "17:30 - 18:30"
     ];
 
+    const dateInput = document.getElementById('date');
+    const slotSelect = document.getElementById('slot');
+
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
-    document.getElementById('date').value = `${year}-${month}-${day}`;
+    const todayStr = `${year}-${month}-${day}`;
+    dateInput.value = todayStr;
 
-    const slotSelect = document.getElementById('slot');
-    SLOTS.forEach(s => slotSelect.innerHTML += `<option value="${s}">${s}</option>`);
+    function populateSlots() {
+      slotSelect.innerHTML = '';
+      const selectedDate = dateInput.value;
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentMin = now.getMinutes();
+
+      let validSlotsCount = 0;
+
+      SLOTS.forEach(s => {
+        let isPast = false;
+        if (selectedDate === todayStr) {
+          const startHour = parseInt(s.split(':')[0]);
+          const startMin = parseInt(s.split(':')[1]);
+          if (currentHour > startHour || (currentHour === startHour && currentMin >= startMin)) {
+            isPast = true;
+          }
+        }
+
+        if (!isPast) {
+          slotSelect.innerHTML += `<option value="${s}">${s}</option>`;
+          validSlotsCount++;
+        }
+      });
+
+      if (validSlotsCount === 0) {
+        slotSelect.innerHTML = `<option value="" disabled selected>Aucun créneau disponible aujourd'hui</option>`;
+      }
+    }
+
+    dateInput.addEventListener('change', populateSlots);
+    populateSlots();
 
     const eqContainer = document.getElementById('equipment-list');
     Object.keys(INVENTORY).forEach(key => {
@@ -154,10 +193,21 @@
       eqContainer.innerHTML += `
         <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
           <span class="font-bold text-xs">${INVENTORY[key].name} (${INVENTORY[key].price}€/h)</span>
-          <select id="client-qty-${key}" class="border rounded-lg px-3 py-1 font-bold text-xs bg-white">${opts}</select>
+          <select id="client-qty-${key}" class="eq-qty-select border rounded-lg px-3 py-1 font-bold text-xs bg-white">${opts}</select>
         </div>
       `;
     });
+
+    function updateLiveTotal() {
+      let total = 0;
+      Object.keys(INVENTORY).forEach(key => {
+        const qty = parseInt(document.getElementById(`client-qty-${key}`).value) || 0;
+        total += qty * INVENTORY[key].price;
+      });
+      document.getElementById('live-total-price').innerText = `${total} €`;
+    }
+
+    document.querySelectorAll('.eq-qty-select').forEach(sel => sel.addEventListener('change', updateLiveTotal));
 
     function sendTelegramNotification(msg) {
       const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`;
@@ -167,6 +217,11 @@
 
     document.getElementById('client-form').addEventListener('submit', async (e) => {
       e.preventDefault();
+
+      if (!slotSelect.value) {
+        alert("Veuillez sélectionner un créneau horaire valide.");
+        return;
+      }
 
       let selectedItems = {};
       let totalPrice = 0;
@@ -191,9 +246,12 @@
       const nom = document.getElementById('nom').value.trim();
       const prenom = document.getElementById('prenom').value.trim();
       const phoneVal = document.getElementById('phone').value.trim();
-      const dateVal = document.getElementById('date').value;
-      const slotVal = document.getElementById('slot').value;
+      const dateVal = dateInput.value;
+      const slotVal = slotSelect.value;
       const partVal = document.getElementById('participants').value.trim();
+
+      const tgMsg = `🚨 <b>NOUVELLE DEMANDE DE RÉSERVATION !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à ${slotVal}\n🏄‍♂️ <b>Matériel :</b> ${itemsSummary.join(', ')}\n👥 <b>Participants :</b> ${partVal}`;
+      sendTelegramNotification(tgMsg);
 
       const docRef = await addDoc(bookingsCol, {
         date: dateVal,
@@ -209,9 +267,6 @@
         totalPrice: totalPrice,
         createdAt: Date.now()
       });
-
-      const tgMsg = `🚨 <b>NOUVELLE DEMANDE DE RÉSERVATION !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à ${slotVal}\n🏄‍♂️ <b>Matériel :</b> ${itemsSummary.join(', ')}\n👥 <b>Participants :</b> ${partVal}`;
-      sendTelegramNotification(tgMsg);
 
       document.getElementById('client-form').classList.add('hidden');
       document.getElementById('pending-screen').classList.remove('hidden');
