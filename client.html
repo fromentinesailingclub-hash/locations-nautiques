@@ -114,7 +114,8 @@
       measurementId: "G-NZ18JKK3PC"
     };
 
-    const TELEGRAM_BOT_TOKEN = "8777397757:AAHymn1Lylrb0_KVYSmL9vfj9RPKYnV5mDI";
+    // VRAI TOKEN DE MÊME CASE QUE TELEGRAM
+    const TELEGRAM_BOT_TOKEN = "8777397757:AAHymn1LylrbO_KVYSmL9vfj9RPKYnV5mDI";
     const TELEGRAM_CHAT_ID = "6641751783";
 
     const app = initializeApp(firebaseConfig);
@@ -160,8 +161,6 @@
 
     function sendTelegramNotification(msg) {
       const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`;
-      
-      // Utilisation d'une image pixel silencieuse pour forcer l'envoi sans blocage CORS
       const img = new Image();
       img.src = url;
     }
@@ -211,7 +210,6 @@
         createdAt: Date.now()
       });
 
-      // Notification Push Telegram robuste
       const tgMsg = `🚨 <b>NOUVELLE DEMANDE DE RÉSERVATION !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à ${slotVal}\n🏄‍♂️ <b>Matériel :</b> ${itemsSummary.join(', ')}\n👥 <b>Participants :</b> ${partVal}`;
       sendTelegramNotification(tgMsg);
 
