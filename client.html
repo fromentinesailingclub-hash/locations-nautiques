@@ -58,6 +58,14 @@
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Numéro de Téléphone *</label>
           <input type="tel" id="phone" placeholder="06 12 34 56 78" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required>
         </div>
+
+        <!-- Case à cocher Adhérent FSC 2026 -->
+        <div class="bg-blue-50/80 p-3 rounded-xl border border-blue-200">
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="checkbox" id="is-member" class="w-4 h-4 accent-blue-600 rounded">
+            <span class="text-xs font-black text-blue-900">Je suis adhérent FSC en 2026 (-5 € / matériel)</span>
+          </label>
+        </div>
       </div>
 
       <div class="space-y-3 border-b pb-3">
@@ -145,6 +153,7 @@
 
     const dateInput = document.getElementById('date');
     const slotSelect = document.getElementById('slot');
+    const isMemberCheck = document.getElementById('is-member');
 
     const today = new Date();
     const year = today.getFullYear();
@@ -186,28 +195,50 @@
     dateInput.addEventListener('change', populateSlots);
     populateSlots();
 
-    const eqContainer = document.getElementById('equipment-list');
-    Object.keys(INVENTORY).forEach(key => {
-      let opts = '';
-      for (let i = 0; i <= INVENTORY[key].max; i++) opts += `<option value="${i}">${i}</option>`;
-      eqContainer.innerHTML += `
-        <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
-          <span class="font-bold text-xs">${INVENTORY[key].name} (${INVENTORY[key].price}€/h)</span>
-          <select id="client-qty-${key}" class="eq-qty-select border rounded-lg px-3 py-1 font-bold text-xs bg-white">${opts}</select>
-        </div>
-      `;
-    });
+    function renderEquipmentList() {
+      const isMember = isMemberCheck.checked;
+      const container = document.getElementById('equipment-list');
+      container.innerHTML = '';
+
+      Object.keys(INVENTORY).forEach(key => {
+        const itemPrice = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
+        let opts = '';
+        for (let i = 0; i <= INVENTORY[key].max; i++) opts += `<option value="${i}">${i}</option>`;
+
+        container.innerHTML += `
+          <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+            <div>
+              <span class="font-bold text-xs block text-slate-800">${INVENTORY[key].name}</span>
+              <span class="text-[10px] ${isMember ? 'text-emerald-700 font-black' : 'text-slate-500'}">
+                ${itemPrice}€/h ${isMember ? '(Tarif Adhérent -5€)' : ''}
+              </span>
+            </div>
+            <select id="client-qty-${key}" class="eq-qty-select border rounded-lg px-3 py-1 font-bold text-xs bg-white">${opts}</select>
+          </div>
+        `;
+      });
+
+      document.querySelectorAll('.eq-qty-select').forEach(sel => sel.addEventListener('change', updateLiveTotal));
+      updateLiveTotal();
+    }
+
+    isMemberCheck.addEventListener('change', renderEquipmentList);
 
     function updateLiveTotal() {
+      const isMember = isMemberCheck.checked;
       let total = 0;
       Object.keys(INVENTORY).forEach(key => {
-        const qty = parseInt(document.getElementById(`client-qty-${key}`).value) || 0;
-        total += qty * INVENTORY[key].price;
+        const el = document.getElementById(`client-qty-${key}`);
+        if (el) {
+          const qty = parseInt(el.value) || 0;
+          const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
+          total += qty * price;
+        }
       });
       document.getElementById('live-total-price').innerText = `${total} €`;
     }
 
-    document.querySelectorAll('.eq-qty-select').forEach(sel => sel.addEventListener('change', updateLiveTotal));
+    renderEquipmentList();
 
     function sendTelegramNotification(msg) {
       const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(msg)}&parse_mode=HTML`;
@@ -223,6 +254,7 @@
         return;
       }
 
+      const isMember = isMemberCheck.checked;
       let selectedItems = {};
       let totalPrice = 0;
       let totalQty = 0;
@@ -231,8 +263,9 @@
       Object.keys(INVENTORY).forEach(key => {
         const qty = parseInt(document.getElementById(`client-qty-${key}`).value) || 0;
         if (qty > 0) {
+          const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
           selectedItems[key] = qty;
-          totalPrice += qty * INVENTORY[key].price;
+          totalPrice += qty * price;
           totalQty += qty;
           itemsSummary.push(`${qty}x ${INVENTORY[key].name}`);
         }
@@ -250,19 +283,20 @@
       const slotVal = slotSelect.value;
       const partVal = document.getElementById('participants').value.trim();
 
-      const tgMsg = `🚨 <b>NOUVELLE DEMANDE DE RÉSERVATION !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à ${slotVal}\n🏄‍♂️ <b>Matériel :</b> ${itemsSummary.join(', ')}\n👥 <b>Participants :</b> ${partVal}`;
+      const tgMsg = `🚨 <b>NOUVELLE DEMANDE DE RÉSERVATION !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()} ${isMember ? '⭐ (ADHÉRENT 2026)' : ''}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à ${slotVal}\n🏄‍♂️ <b>Matériel :</b> ${itemsSummary.join(', ')}\n👥 <b>Participants :</b> ${partVal}`;
       sendTelegramNotification(tgMsg);
 
       const docRef = await addDoc(bookingsCol, {
         date: dateVal,
         slot: slotVal,
         respNav: 'En attente validation',
-        client: `Demande: ${nom.toUpperCase()} ${prenom}`,
+        client: `Demande: ${nom.toUpperCase()} ${prenom}${isMember ? ' (Adhérent)' : ''}`,
         phone: phoneVal,
         usersNames: partVal,
         emergency: document.getElementById('emergency').value,
         status: 'EN_ATTENTE',
         returned: false,
+        isMember: isMember,
         items: selectedItems,
         totalPrice: totalPrice,
         createdAt: Date.now()
@@ -278,7 +312,7 @@
             document.getElementById('pending-screen').classList.add('hidden');
             document.getElementById('success-screen').classList.remove('hidden');
             document.getElementById('confirmed-details').innerHTML = `
-              <div><strong>Client :</strong> ${nom.toUpperCase()} ${prenom}</div>
+              <div><strong>Client :</strong> ${nom.toUpperCase()} ${prenom} ${isMember ? '(Adhérent FSC)' : ''}</div>
               <div><strong>Date & Heure :</strong> ${data.date} à ${data.slot}</div>
               <div><strong>Matériel :</strong> ${itemsSummary.join(', ')}</div>
               <div><strong>Prix Total :</strong> ${data.totalPrice} €</div>
