@@ -134,6 +134,14 @@
             <input type="text" id="client-name" placeholder="ex: Mr Dupont" class="w-full border border-slate-300 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500" required>
           </div>
 
+          <!-- Case Adhérent FSC 2026 -->
+          <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-200">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" id="form-is-member" class="w-4 h-4 accent-blue-600 rounded">
+              <span class="text-xs font-black text-blue-900">Adhérent FSC 2026 (-5 € / matériel)</span>
+            </label>
+          </div>
+
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div>
               <label class="block text-xs font-bold text-slate-500 mb-1">📞 Téléphone</label>
@@ -236,6 +244,12 @@
         <div>
           <label class="block text-[10px] font-bold text-slate-500 mb-1">Nom de la réservation</label>
           <input type="text" id="edit-client-name" class="w-full border rounded-xl p-2.5 text-xs font-bold" required>
+        </div>
+        <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-200">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="edit-is-member" class="w-4 h-4 accent-blue-600 rounded">
+            <span class="text-xs font-bold text-blue-900">Adhérent FSC 2026 (-5 € / matériel)</span>
+          </label>
         </div>
         <div>
           <label class="block text-[10px] font-bold text-slate-500 mb-1">Téléphone</label>
@@ -341,6 +355,7 @@
     const editSlotSelect = document.getElementById('edit-slot');
     const respSelect = document.getElementById('client-name-select');
     const respCustom = document.getElementById('client-name-custom');
+    const formIsMemberCheck = document.getElementById('form-is-member');
     const form = document.getElementById('booking-form');
     const editForm = document.getElementById('edit-form');
     const eqContainer = document.getElementById('equipment-selection');
@@ -368,7 +383,8 @@
       }
     });
 
-    formSlotSelect.addEventListener('change', updateEquipmentSelectors);
+    formSlotSelect.addEventListener('change', () => updateEquipmentSelectors());
+    formIsMemberCheck.addEventListener('change', () => updateEquipmentSelectors());
 
     function playNotificationSound() {
       try {
@@ -404,7 +420,7 @@
 
     function generateCsvData(bookingList) {
       let csvRows = [];
-      csvRows.push(["Date", "Créneau", "Client", "Téléphone", "Prise en charge", "Matériels", "Pratiquants", "Urgence", "Statut Paiement", "Prix", "Statut Mer"].join(";"));
+      csvRows.push(["Date", "Créneau", "Client", "Adhérent", "Téléphone", "Prise en charge", "Matériels", "Pratiquants", "Urgence", "Statut Paiement", "Prix", "Statut Mer"].join(";"));
 
       bookingList.forEach(b => {
         let itemsArr = [];
@@ -424,6 +440,7 @@
           `"${b.date || ''}"`,
           `"${b.slot || ''}"`,
           `"${clientClean}"`,
+          `"${b.isMember ? 'Oui (-5€)' : 'Non'}"`,
           `"${b.phone || ''}"`,
           `"${b.respNav || ''}"`,
           `"${itemsClean}"`,
@@ -494,12 +511,11 @@
       return now >= slotStartTime;
     }
 
-    // Détection des retards (+15min après la fin du créneau)
     function isOverdue(dateStr, slotStr) {
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
       const todayStr = `${year}-${month}-${day}`;
 
       if (dateStr < todayStr) return true;
@@ -508,7 +524,7 @@
       const endTimeStr = slotStr.split(' - ')[1];
       const [endHour, endMin] = endTimeStr.split(':').map(Number);
       const slotEndTime = new Date();
-      slotEndTime.setHours(endHour, endMin + 15, 0, 0); // +15 min de tolérance
+      slotEndTime.setHours(endHour, endMin + 15, 0, 0);
 
       return now > slotEndTime;
     }
@@ -539,6 +555,14 @@
     function updateEquipmentSelectors(selectedKeyToIncrement = null) {
       const selectedDate = dateInput.value;
       const selectedSlot = formSlotSelect.value;
+      const isMember = formIsMemberCheck.checked;
+
+      // Conservation des valeurs déjà saisies au lieu de les réinitialiser
+      let currentValues = {};
+      Object.keys(INVENTORY).forEach(key => {
+        const inputEl = document.getElementById(`qty-${key}`);
+        if (inputEl) currentValues[key] = parseInt(inputEl.value) || 0;
+      });
 
       eqContainer.innerHTML = '';
       editEqContainer.innerHTML = '';
@@ -546,13 +570,19 @@
       Object.keys(INVENTORY).forEach(key => {
         const avail = getAvailableStock(selectedDate, selectedSlot, key);
         const isTarget = (selectedKeyToIncrement === key && avail > 0);
-        const initVal = isTarget ? 1 : 0;
+        let initVal = currentValues[key] || 0;
+        if (isTarget) initVal = 1;
+
+        if (initVal > avail) initVal = avail;
+        const itemPrice = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
 
         eqContainer.innerHTML += `
           <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200">
             <div>
               <span class="font-bold text-slate-800 text-xs block">${INVENTORY[key].name}</span>
-              <span class="text-[10px] ${avail > 0 ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}">${avail} dispo (${INVENTORY[key].price}€/h)</span>
+              <span class="text-[10px] ${avail > 0 ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}">
+                ${avail} dispo (${itemPrice}€/h ${isMember ? '-5€ Adhérent' : ''})
+              </span>
             </div>
             <input type="hidden" id="qty-${key}" value="${initVal}" max="${avail}">
             <div class="flex items-center gap-2">
@@ -740,8 +770,9 @@
       });
     }
 
+    // SMS AVEC ACCORD PARFAIT DES PLURIELS (AVEC "S")
     window.sendSmsConfirmation = function(phone, clientName, dateStr, slotStr, itemsObj) {
-      let rawName = clientName.replace(/^Demande:\s*/i, '').trim();
+      let rawName = clientName.replace(/^Demande:\s*/i, '').replace(/\s*\(Adhérent\)$/i, '').trim();
       let parts = rawName.split(' ');
       let firstName = parts.length > 1 ? parts[parts.length - 1] : parts[0];
       firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
@@ -762,7 +793,15 @@
       let itemsArr = [];
       if (itemsObj) {
         Object.keys(itemsObj).forEach(k => {
-          if (itemsObj[k] > 0) itemsArr.push(`${itemsObj[k]} ${INVENTORY[k].name}`);
+          const qty = itemsObj[k];
+          if (qty > 0) {
+            let itemName = INVENTORY[k].name;
+            if (qty > 1) {
+              if (itemName.endsWith('LT')) itemName += 's';
+              else if (!itemName.endsWith('s')) itemName += 's';
+            }
+            itemsArr.push(`${qty} ${itemName}`);
+          }
         });
       }
       const itemsText = itemsArr.length > 0 ? itemsArr.join(', ') : 'votre matériel';
@@ -1092,6 +1131,7 @@
       document.getElementById('edit-slot').value = b.slot;
       document.getElementById('edit-resp-name').value = b.respNav || '';
       document.getElementById('edit-client-name').value = b.client || '';
+      document.getElementById('edit-is-member').checked = b.isMember || false;
       document.getElementById('edit-client-phone').value = b.phone || '';
       document.getElementById('edit-users-names').value = b.usersNames || '';
       document.getElementById('edit-emergency-contact').value = b.emergency || '';
@@ -1119,6 +1159,7 @@
       const docId = document.getElementById('edit-id').value;
       const newSlot = document.getElementById('edit-slot').value;
       const currentDate = dateInput.value;
+      const isMember = document.getElementById('edit-is-member').checked;
 
       let selectedItems = {};
       let totalPrice = 0;
@@ -1132,8 +1173,9 @@
             alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`);
             return;
           }
+          const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
           selectedItems[key] = qty;
-          totalPrice += qty * INVENTORY[key].price;
+          totalPrice += qty * price;
           totalQty += qty;
         }
       }
@@ -1148,6 +1190,7 @@
         slot: newSlot,
         respNav: document.getElementById('edit-resp-name').value,
         client: document.getElementById('edit-client-name').value,
+        isMember: isMember,
         phone: document.getElementById('edit-client-phone').value || '',
         usersNames: document.getElementById('edit-users-names').value || '',
         emergency: document.getElementById('edit-emergency-contact').value || '',
@@ -1163,12 +1206,14 @@
       e.preventDefault();
       const selectedDate = dateInput.value;
       const selectedSlot = formSlotSelect.value;
+      const isMember = formIsMemberCheck.checked;
       
       let respName = respSelect.value;
       if (respName === '__NEW__') respName = respCustom.value.trim();
 
       if (!respName) {
         alert("Veuillez choisir le responsable de la réservation.");
+        respSelect.focus();
         return;
       }
 
@@ -1184,8 +1229,9 @@
             alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`);
             return;
           }
+          const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
           selectedItems[key] = qty;
-          totalPrice += qty * INVENTORY[key].price;
+          totalPrice += qty * price;
           totalQty += qty;
         }
       }
@@ -1200,6 +1246,7 @@
         slot: selectedSlot,
         respNav: respName,
         client: document.getElementById('client-name').value,
+        isMember: isMember,
         phone: document.getElementById('client-phone').value || '',
         usersNames: document.getElementById('users-names').value || '',
         emergency: document.getElementById('emergency-contact').value || '',
@@ -1218,12 +1265,13 @@
       document.getElementById('users-names').value = '';
       document.getElementById('emergency-contact').value = '';
       document.getElementById('payment-status').value = 'Non réglé';
+      formIsMemberCheck.checked = false;
       
       updateEquipmentSelectors();
     });
 
     dateInput.addEventListener('change', renderAll);
-    setInterval(renderAll, 30000); // Mise à jour automatique toutes les 30 sec
+    setInterval(renderAll, 30000);
   </script>
 </body>
 </html>
