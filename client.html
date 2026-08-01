@@ -59,7 +59,7 @@
           <input type="tel" id="phone" placeholder="06 12 34 56 78" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required>
         </div>
 
-        <!-- Case à cocher Adhérent FSC 2026 -->
+        <!-- Case Adhérent FSC -->
         <div class="bg-blue-50/80 p-3 rounded-xl border border-blue-200">
           <label class="flex items-center gap-2.5 cursor-pointer">
             <input type="checkbox" id="is-member" class="w-4 h-4 accent-blue-600 rounded">
@@ -148,7 +148,7 @@
       "11:00 - 12:00", "11:30 - 12:30", "12:00 - 13:00", "12:30 - 13:30",
       "13:00 - 14:00", "13:30 - 14:30", "14:00 - 15:00", "14:30 - 15:30",
       "15:00 - 16:00", "15:30 - 16:30", "16:00 - 17:00", "16:30 - 17:30",
-      "17:00 - 18:00", "17:30 - 18:30"
+      "17:00 - 18:00", "17:30 - 18:30", "18:00 - 19:00"
     ];
 
     const dateInput = document.getElementById('date');
@@ -160,23 +160,35 @@
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     const todayStr = `${year}-${month}-${day}`;
+    
     dateInput.value = todayStr;
+    dateInput.min = todayStr;
 
     function populateSlots() {
       slotSelect.innerHTML = '';
       const selectedDate = dateInput.value;
       const now = new Date();
-      const currentHour = now.getHours();
-      const currentMin = now.getMinutes();
+      
+      const currentYear = now.getFullYear();
+      const currentMonth = String(now.getMonth() + 1).padStart(2, '0');
+      const currentDay = String(now.getDate()).padStart(2, '0');
+      const actualTodayStr = `${currentYear}-${currentMonth}-${currentDay}`;
 
       let validSlotsCount = 0;
 
       SLOTS.forEach(s => {
         let isPast = false;
-        if (selectedDate === todayStr) {
-          const startHour = parseInt(s.split(':')[0]);
-          const startMin = parseInt(s.split(':')[1]);
-          if (currentHour > startHour || (currentHour === startHour && currentMin >= startMin)) {
+
+        if (selectedDate < actualTodayStr) {
+          isPast = true;
+        } else if (selectedDate === actualTodayStr) {
+          const startTimeStr = s.split(' - ')[0];
+          const [startHour, startMin] = startTimeStr.split(':').map(Number);
+          
+          const slotStartTime = new Date();
+          slotStartTime.setHours(startHour, startMin, 0, 0);
+
+          if (now >= slotStartTime) {
             isPast = true;
           }
         }
@@ -188,7 +200,7 @@
       });
 
       if (validSlotsCount === 0) {
-        slotSelect.innerHTML = `<option value="" disabled selected>Aucun créneau disponible aujourd'hui</option>`;
+        slotSelect.innerHTML = `<option value="" disabled selected>⚠️ Aucun créneau disponible aujourd'hui</option>`;
       }
     }
 
