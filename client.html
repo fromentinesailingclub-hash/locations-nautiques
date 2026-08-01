@@ -10,14 +10,14 @@
   <div class="max-w-md mx-auto space-y-4">
     
     <!-- En-tête -->
-    <header class="bg-blue-600 text-white rounded-2xl p-5 shadow-lg text-center space-y-1 relative">
+    <header class="bg-blue-600 text-white rounded-2xl p-5 shadow-lg text-center space-y-1">
       <h1 class="text-xl font-black">Fromentine Sailing Club</h1>
       <p class="text-blue-100 text-xs">Formulaire de Demande de Location</p>
     </header>
 
-    <!-- Bouton de redirection vers Longe Côte -->
-    <a href="longe_cote.html" target="_blank" class="block w-full bg-cyan-600 text-white font-black text-center py-3.5 rounded-xl text-xs uppercase tracking-wider shadow active:scale-95 transition-transform border-2 border-cyan-500">
-      🌊 Réserver une séance de Longe Côte
+    <!-- BOUTON NOUVEL ONGLET LONGE CÔTE -->
+    <a href="longe_cote.html" target="_blank" class="block w-full bg-cyan-600 active:bg-cyan-700 text-white font-black text-center py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md border-2 border-cyan-400">
+      🌊 Inscription Longe Côte (Ouvrir dans un nouvel onglet) ↗️
     </a>
 
     <!-- ÉCRAN EN ATTENTE -->
@@ -57,24 +57,27 @@
         </div>
 
         <div>
-          <label class="block text-[11px] font-bold text-slate-600 mb-1">Téléphone *</label>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">Numéro de Téléphone *</label>
           <input type="tel" id="phone" placeholder="06 12 34 56 78" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required>
         </div>
 
+        <!-- Case Adhérent FSC -->
         <div class="bg-blue-50/80 p-3 rounded-xl border border-blue-200">
           <label class="flex items-center gap-2.5 cursor-pointer">
             <input type="checkbox" id="is-member" class="w-4 h-4 accent-blue-600 rounded">
-            <span class="text-xs font-black text-blue-900">Je suis adhérent FSC 2026 (-5 € / matériel)</span>
+            <span class="text-xs font-black text-blue-900">Je suis adhérent FSC en 2026 (-5 € / matériel)</span>
           </label>
         </div>
       </div>
 
       <div class="space-y-3 border-b pb-3">
         <h3 class="font-bold text-xs text-blue-600 uppercase tracking-wider">2. Date & Créneau souhaité</h3>
+        
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Date *</label>
           <input type="date" id="date" class="w-full border-2 border-blue-500 bg-blue-50 rounded-xl p-2.5 text-xs font-bold text-blue-900 outline-none" required>
         </div>
+
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Créneau horaire (1 heure) *</label>
           <select id="slot" class="w-full border rounded-xl p-2.5 text-xs font-bold bg-slate-50 outline-none" required></select>
@@ -84,6 +87,7 @@
       <div class="space-y-3 border-b pb-3">
         <h3 class="font-bold text-xs text-blue-600 uppercase tracking-wider">3. Matériels souhaités</h3>
         <div id="equipment-list" class="space-y-2"></div>
+        
         <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 flex justify-between items-center mt-2">
           <span class="text-xs font-bold text-blue-900">Montant total estimé :</span>
           <span id="live-total-price" class="text-lg font-black text-blue-700">0 €</span>
@@ -92,13 +96,15 @@
 
       <div class="space-y-3">
         <h3 class="font-bold text-xs text-blue-600 uppercase tracking-wider">4. Pratiquants & Urgence</h3>
+        
         <div>
           <label class="block text-[11px] font-bold text-slate-600 mb-1">Noms, Prénoms & Âges des participants *</label>
-          <textarea id="participants" rows="2" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
+          <textarea id="participants" rows="2" placeholder="ex: Marc (35 ans), Lucas (12 ans)..." class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-blue-500" required></textarea>
         </div>
+
         <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
           <label class="block text-[11px] font-bold text-amber-900 mb-1">🚨 Contact Urgence (Nom + Téléphone) *</label>
-          <input type="text" id="emergency" class="w-full border border-amber-300 rounded-lg p-2 text-xs bg-white outline-none" required>
+          <input type="text" id="emergency" placeholder="ex: Julie 06 99 88 77 66" class="w-full border border-amber-300 rounded-lg p-2 text-xs bg-white outline-none" required>
         </div>
       </div>
 
@@ -106,6 +112,7 @@
         📩 Envoyer ma demande
       </button>
     </form>
+
   </div>
 
   <script type="module">
@@ -149,24 +156,34 @@
     const slotSelect = document.getElementById('slot');
     const isMemberCheck = document.getElementById('is-member');
 
+    // Date du jour par défaut
     const today = new Date();
-    dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    dateInput.min = dateInput.value;
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${y}-${m}-${d}`;
 
+    dateInput.value = todayStr;
+    dateInput.min = todayStr;
+
+    // FONCTION DE SÉLECTION DYNAMIQUE DE L'HEURE ACTUELLE
     function populateSlots() {
       slotSelect.innerHTML = '';
       const selectedDate = dateInput.value;
       if (!selectedDate) return;
 
       const now = new Date();
-      const [y, m, d] = selectedDate.split('-').map(Number);
       let validSlotsCount = 0;
 
       SLOTS.forEach(s => {
-        const [startHour, startMin] = s.split(' - ')[0].split(':').map(Number);
-        // Création de l'heure exacte du créneau (infaillible)
-        const slotTime = new Date(y, m - 1, d, startHour, startMin, 0, 0);
+        const startTimeStr = s.split(' - ')[0]; // Ex: "09:00"
+        const [h, min] = startTimeStr.split(':').map(Number);
+        
+        // Date exacte de début du créneau
+        const [selY, selM, selD] = selectedDate.split('-').map(Number);
+        const slotTime = new Date(selY, selM - 1, selD, h, min, 0, 0);
 
+        // Si la date choisie est dans le futur OU si aujourd'hui l'heure du créneau est stricte dans le futur
         if (slotTime > now) {
           slotSelect.innerHTML += `<option value="${s}">${s}</option>`;
           validSlotsCount++;
@@ -174,7 +191,7 @@
       });
 
       if (validSlotsCount === 0) {
-        slotSelect.innerHTML = `<option value="" disabled selected>⚠️ Aucun créneau disponible (déjà passé)</option>`;
+        slotSelect.innerHTML = `<option value="" disabled selected>⚠️ Aucun créneau disponible aujourd'hui (créneaux passés)</option>`;
       }
     }
 
@@ -190,22 +207,25 @@
         const itemPrice = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
         let opts = '';
         for (let i = 0; i <= INVENTORY[key].max; i++) opts += `<option value="${i}">${i}</option>`;
+
         container.innerHTML += `
           <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
             <div>
               <span class="font-bold text-xs block text-slate-800">${INVENTORY[key].name}</span>
-              <span class="text-[10px] ${isMember ? 'text-emerald-700 font-black' : 'text-slate-500'}">${itemPrice}€/h</span>
+              <span class="text-[10px] ${isMember ? 'text-emerald-700 font-black' : 'text-slate-500'}">
+                ${itemPrice}€/h ${isMember ? '(Tarif Adhérent -5€)' : ''}
+              </span>
             </div>
             <select id="client-qty-${key}" class="eq-qty-select border rounded-lg px-3 py-1 font-bold text-xs bg-white">${opts}</select>
           </div>
         `;
       });
+
       document.querySelectorAll('.eq-qty-select').forEach(sel => sel.addEventListener('change', updateLiveTotal));
       updateLiveTotal();
     }
 
     isMemberCheck.addEventListener('change', renderEquipmentList);
-    renderEquipmentList();
 
     function updateLiveTotal() {
       const isMember = isMemberCheck.checked;
@@ -221,24 +241,37 @@
       document.getElementById('live-total-price').innerText = `${total} €`;
     }
 
+    renderEquipmentList();
+
     document.getElementById('client-form').addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (!slotSelect.value) { alert("Veuillez sélectionner un créneau horaire valide."); return; }
+
+      if (!slotSelect.value) {
+        alert("Veuillez sélectionner un créneau horaire valide.");
+        return;
+      }
 
       const isMember = isMemberCheck.checked;
       let selectedItems = {};
-      let totalPrice = 0; let totalQty = 0; let itemsSummary = [];
+      let totalPrice = 0;
+      let totalQty = 0;
+      let itemsSummary = [];
 
       Object.keys(INVENTORY).forEach(key => {
         const qty = parseInt(document.getElementById(`client-qty-${key}`).value) || 0;
         if (qty > 0) {
           const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
-          selectedItems[key] = qty; totalPrice += qty * price; totalQty += qty;
+          selectedItems[key] = qty;
+          totalPrice += qty * price;
+          totalQty += qty;
           itemsSummary.push(`${qty}x ${INVENTORY[key].name}`);
         }
       });
 
-      if (totalQty === 0) { alert("Veuillez sélectionner au moins un matériel."); return; }
+      if (totalQty === 0) {
+        alert("Veuillez sélectionner au moins un matériel.");
+        return;
+      }
 
       const nom = document.getElementById('nom').value.trim();
       const prenom = document.getElementById('prenom').value.trim();
@@ -252,11 +285,19 @@
       (new Image()).src = url;
 
       const docRef = await addDoc(bookingsCol, {
-        date: dateVal, slot: slotVal, respNav: 'En attente validation',
+        date: dateVal,
+        slot: slotVal,
+        respNav: 'En attente validation',
         client: `Demande: ${nom.toUpperCase()} ${prenom}${isMember ? ' (Adhérent)' : ''}`,
-        phone: phoneVal, usersNames: partVal, emergency: document.getElementById('emergency').value,
-        status: 'EN_ATTENTE', returned: false, isMember: isMember, items: selectedItems,
-        totalPrice: totalPrice, createdAt: Date.now()
+        phone: phoneVal,
+        usersNames: partVal,
+        emergency: document.getElementById('emergency').value,
+        status: 'EN_ATTENTE',
+        returned: false,
+        isMember: isMember,
+        items: selectedItems,
+        totalPrice: totalPrice,
+        createdAt: Date.now()
       });
 
       document.getElementById('client-form').classList.add('hidden');
@@ -269,7 +310,7 @@
             document.getElementById('pending-screen').classList.add('hidden');
             document.getElementById('success-screen').classList.remove('hidden');
             document.getElementById('confirmed-details').innerHTML = `
-              <div><strong>Client :</strong> ${nom.toUpperCase()} ${prenom}</div>
+              <div><strong>Client :</strong> ${nom.toUpperCase()} ${prenom} ${isMember ? '(Adhérent FSC)' : ''}</div>
               <div><strong>Date & Heure :</strong> ${data.date} à ${data.slot}</div>
               <div><strong>Matériel :</strong> ${itemsSummary.join(', ')}</div>
               <div><strong>Prix Total :</strong> ${data.totalPrice} €</div>
