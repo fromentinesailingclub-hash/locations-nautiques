@@ -277,7 +277,6 @@
     </div>
   </div>
 
-  <!-- Firebase & App Logic -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
     import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
@@ -364,10 +363,7 @@
     const editEqContainer = document.getElementById('edit-equipment-selection');
 
     const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    dateInput.value = `${year}-${month}-${day}`;
+    dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
 
     SLOTS.forEach(slot => {
       formSlotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
@@ -407,29 +403,22 @@
 
     onSnapshot(bookingsCol, (snapshot) => {
       bookings = [];
-      snapshot.forEach(docSnap => {
-        bookings.push({ id: docSnap.id, ...docSnap.data() });
-      });
-
+      snapshot.forEach(docSnap => { bookings.push({ id: docSnap.id, ...docSnap.data() }); });
       const currentPendingCount = bookings.filter(b => b.status === 'EN_ATTENTE').length;
       if (previousPendingCount !== -1 && currentPendingCount > previousPendingCount) {
         playNotificationSound();
       }
       previousPendingCount = currentPendingCount;
-
       renderAll();
     });
 
     function isLongeCoteAvailableForAdmin() {
       if (!dateInput.value || !formSlotSelect.value) return false;
-      
-      const parts = dateInput.value.split('-');
-      const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      const dayOfWeek = d.getDay(); // 0 = Dim, 2 = Mar, 4 = Jeu
-
+      const [y, m, d] = dateInput.value.split('-').map(Number);
+      const chosenDate = new Date(y, m - 1, d);
+      const dayOfWeek = chosenDate.getDay(); 
       const isAllowedDay = (dayOfWeek === 0 || dayOfWeek === 2 || dayOfWeek === 4);
       const is10amSlot = formSlotSelect.value.startsWith("10:00");
-
       return isAllowedDay && is10amSlot;
     }
 
@@ -452,22 +441,12 @@
         let returnedText = b.returned ? 'Rentré' : 'En Mer / Non Rentré';
 
         let row = [
-          `"${b.date || ''}"`,
-          `"${b.slot || ''}"`,
-          `"${clientClean}"`,
-          `"${b.isMember ? 'Oui (-5€)' : 'Non'}"`,
-          `"${b.phone || ''}"`,
-          `"${b.respNav || ''}"`,
-          `"${itemsClean}"`,
-          `"${usersClean}"`,
-          `"${emergencyClean}"`,
-          `"${b.status || 'Non réglé'}"`,
-          `"${b.totalPrice || 0} €"`,
-          `"${returnedText}"`
+          `"${b.date || ''}"`, `"${b.slot || ''}"`, `"${clientClean}"`, `"${b.isMember ? 'Oui (-5€)' : 'Non'}"`,
+          `"${b.phone || ''}"`, `"${b.respNav || ''}"`, `"${itemsClean}"`, `"${usersClean}"`,
+          `"${emergencyClean}"`, `"${b.status || 'Non réglé'}"`, `"${b.totalPrice || 0} €"`, `"${returnedText}"`
         ];
         csvRows.push(row.join(";"));
       });
-
       return "\uFEFF" + csvRows.join("\n");
     }
 
@@ -485,62 +464,30 @@
     window.exportDailyCsv = function() {
       const selectedDate = dateInput.value;
       const dailyBookings = bookings.filter(b => b.date === selectedDate && b.status !== 'EN_ATTENTE');
-      
-      if (dailyBookings.length === 0) {
-        alert("Aucune réservation confirmée à exporter pour cette date.");
-        return;
-      }
-
-      const csvData = generateCsvData(dailyBookings);
-      downloadCsvFile(csvData, `Reservations_FSC_${selectedDate}.csv`);
+      if (dailyBookings.length === 0) { alert("Aucune réservation confirmée à exporter pour cette date."); return; }
+      downloadCsvFile(generateCsvData(dailyBookings), `Reservations_FSC_${selectedDate}.csv`);
     };
 
     window.exportAllCsv = function() {
       const activeBookings = bookings.filter(b => b.status !== 'EN_ATTENTE');
-      
-      if (activeBookings.length === 0) {
-        alert("Le registre de réservations est totalement vide.");
-        return;
-      }
-
+      if (activeBookings.length === 0) { alert("Le registre de réservations est totalement vide."); return; }
       activeBookings.sort((a, b) => (a.date > b.date) ? 1 : -1);
-      const csvData = generateCsvData(activeBookings);
-      downloadCsvFile(csvData, `Registre_Complet_FSC_Compilation.csv`);
+      downloadCsvFile(generateCsvData(activeBookings), `Registre_Complet_FSC_Compilation.csv`);
     };
 
     function hasSlotStarted(dateStr, slotStr) {
       const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const todayStr = `${year}-${month}-${day}`;
-
-      if (dateStr < todayStr) return true;
-      if (dateStr > todayStr) return false;
-
-      const startTimeStr = slotStr.split(' - ')[0];
-      const [startHour, startMin] = startTimeStr.split(':').map(Number);
-      const slotStartTime = new Date();
-      slotStartTime.setHours(startHour, startMin, 0, 0);
-
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const [startHour, startMin] = slotStr.split(' - ')[0].split(':').map(Number);
+      const slotStartTime = new Date(y, m - 1, d, startHour, startMin, 0, 0);
       return now >= slotStartTime;
     }
 
     function isOverdue(dateStr, slotStr) {
       const now = new Date();
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(now.getDate()).padStart(2, '0');
-      const todayStr = `${year}-${month}-${day}`;
-
-      if (dateStr < todayStr) return true;
-      if (dateStr > todayStr) return false;
-
-      const endTimeStr = slotStr.split(' - ')[1];
-      const [endHour, endMin] = endTimeStr.split(':').map(Number);
-      const slotEndTime = new Date();
-      slotEndTime.setHours(endHour, endMin + 15, 0, 0);
-
+      const [y, m, d] = dateStr.split('-').map(Number);
+      const [endHour, endMin] = slotStr.split(' - ')[1].split(':').map(Number);
+      const slotEndTime = new Date(y, m - 1, d, endHour, endMin + 15, 0, 0);
       return now > slotEndTime;
     }
 
@@ -548,11 +495,7 @@
       let used = 0;
       bookings
         .filter(b => b.date === date && b.slot === slot && b.status !== 'EN_ATTENTE' && b.id !== excludeBookingId)
-        .forEach(b => {
-          if (b.items && b.items[itemKey]) {
-            used += b.items[itemKey];
-          }
-        });
+        .forEach(b => { if (b.items && b.items[itemKey]) used += b.items[itemKey]; });
       return INVENTORY[itemKey].max - used;
     }
 
@@ -611,9 +554,7 @@
         `;
 
         let editOptionsHtml = '';
-        for (let i = 0; i <= INVENTORY[key].max; i++) {
-          editOptionsHtml += `<option value="${i}">${i}</option>`;
-        }
+        for (let i = 0; i <= INVENTORY[key].max; i++) editOptionsHtml += `<option value="${i}">${i}</option>`;
         editEqContainer.innerHTML += `
           <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border">
             <span class="font-bold text-slate-800">${INVENTORY[key].name}</span>
@@ -630,15 +571,11 @@
       });
 
       const sortedResps = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
-
-      respSelect.innerHTML = `<option value="" disabled selected>-- Choisir le Resp Nav / Équipe --</option>`;
-      respSelect.innerHTML += `<option value="__NEW__" class="font-bold text-blue-600">➕ Ajouter un nouveau membre...</option>`;
+      respSelect.innerHTML = `<option value="" disabled selected>-- Choisir le Resp Nav / Équipe --</option><option value="__NEW__" class="font-bold text-blue-600">➕ Ajouter un nouveau membre...</option>`;
 
       if (sortedResps.length > 0) {
         respSelect.innerHTML += `<option disabled>────────── Membres fréquents ──────────</option>`;
-        sortedResps.forEach(name => {
-          respSelect.innerHTML += `<option value="${name}">${name} (${counts[name]} résa)</option>`;
-        });
+        sortedResps.forEach(name => { respSelect.innerHTML += `<option value="${name}">${name} (${counts[name]} résa)</option>`; });
       }
     }
 
@@ -646,69 +583,32 @@
       const selectedDate = dateInput.value;
       const dayBookings = bookings.filter(b => b.date === selectedDate && b.status !== 'EN_ATTENTE');
       
-      let total = 0;
-      let totalPaid = 0;
-      let totalUnpaid = 0;
-      let summaryByEq = {};
-
+      let total = 0; let totalPaid = 0; let totalUnpaid = 0; let summaryByEq = {};
       Object.keys(INVENTORY).forEach(k => summaryByEq[k] = 0);
 
       dayBookings.forEach(b => {
         total += b.totalPrice;
-        if (b.status === 'Réglé') totalPaid += b.totalPrice;
-        else totalUnpaid += b.totalPrice;
-
-        if (b.items) {
-          Object.keys(b.items).forEach(k => {
-            if (b.items[k] > 0) summaryByEq[k] += b.items[k];
-          });
-        }
+        if (b.status === 'Réglé') totalPaid += b.totalPrice; else totalUnpaid += b.totalPrice;
+        if (b.items) { Object.keys(b.items).forEach(k => { if (b.items[k] > 0) summaryByEq[k] += b.items[k]; }); }
       });
 
-      let eqDetails = Object.keys(INVENTORY)
-        .map(k => `- ${INVENTORY[k].name} : ${summaryByEq[k]} loué(s)/réservé(s)`)
-        .join('\n');
-
+      let eqDetails = Object.keys(INVENTORY).map(k => `- ${INVENTORY[k].name} : ${summaryByEq[k]} loué(s)/réservé(s)`).join('\n');
       alert(`📊 RÉCAPITULATIF CAISSE DU ${selectedDate}\n\n💰 Recettes Totales : ${total} €\n✅ Réglé (En caisse) : ${totalPaid} €\n⏳ Non réglé : ${totalUnpaid} €\n\n🏄‍♂️ MATÉRIELS & ACTIVITÉS :\n${eqDetails}`);
     };
 
     window.switchView = function(view) {
-      const dayView = document.getElementById('view-day');
-      const requestsView = document.getElementById('view-requests');
-      const gridView = document.getElementById('view-grid');
-      const weekView = document.getElementById('view-week');
+      ['day', 'requests', 'grid', 'week'].forEach(v => {
+        document.getElementById(`view-${v}`).classList.add('hidden');
+        document.getElementById(`tab-${v}-btn`).className = "py-3 px-1 rounded-xl text-slate-600";
+      });
 
-      const btnDay = document.getElementById('tab-day-btn');
-      const btnReq = document.getElementById('tab-requests-btn');
-      const btnGrid = document.getElementById('tab-grid-btn');
-      const btnWeek = document.getElementById('tab-week-btn');
-
-      dayView.classList.add('hidden');
-      requestsView.classList.add('hidden');
-      gridView.classList.add('hidden');
-      weekView.classList.add('hidden');
-
-      btnDay.className = "py-3 px-1 rounded-xl text-slate-600";
-      btnReq.className = "py-3 px-1 rounded-xl text-slate-600";
-      btnGrid.className = "py-3 px-1 rounded-xl text-slate-600";
-      btnWeek.className = "py-3 px-1 rounded-xl text-slate-600";
-
-      if (view === 'day') {
-        dayView.classList.remove('hidden');
-        btnDay.className = "py-3 px-1 rounded-xl bg-blue-600 text-white font-bold shadow-sm";
-      } else if (view === 'requests') {
-        requestsView.classList.remove('hidden');
-        btnReq.className = "py-3 px-1 rounded-xl bg-amber-500 text-slate-900 font-black shadow-sm";
-        renderPendingRequests();
-      } else if (view === 'grid') {
-        gridView.classList.remove('hidden');
-        btnGrid.className = "py-3 px-1 rounded-xl bg-blue-600 text-white font-bold shadow-sm";
-        renderGrid();
-      } else {
-        weekView.classList.remove('hidden');
-        btnWeek.className = "py-3 px-1 rounded-xl bg-blue-600 text-white font-bold shadow-sm";
-        renderWeek();
-      }
+      document.getElementById(`view-${view}`).classList.remove('hidden');
+      const btn = document.getElementById(`tab-${view}-btn`);
+      btn.className = `py-3 px-1 rounded-xl font-bold shadow-sm ${view === 'requests' ? 'bg-amber-500 text-slate-900 font-black' : 'bg-blue-600 text-white'}`;
+      
+      if (view === 'requests') renderPendingRequests();
+      else if (view === 'grid') renderGrid();
+      else if (view === 'week') renderWeek();
     };
 
     window.scrollToBookings = function() {
@@ -716,10 +616,7 @@
       document.getElementById('bookings-section-day').scrollIntoView({ behavior: 'smooth' });
     };
 
-    window.toggleOnWaterPanel = function() {
-      const panel = document.getElementById('on-water-panel');
-      panel.classList.toggle('hidden');
-    };
+    window.toggleOnWaterPanel = function() { document.getElementById('on-water-panel').classList.toggle('hidden'); };
 
     window.startBookingFromGrid = function(slot, itemKey) {
       formSlotSelect.value = slot;
@@ -767,20 +664,16 @@
                 </span>
               </div>
             </div>
-
             <div class="bg-white p-2.5 rounded-xl text-xs space-y-1 border border-amber-200">
               <div class="font-bold text-slate-800">🏄‍♂️ ${itemsArr.join(', ')}</div>
               <div class="text-slate-600">${b.usersNames}</div>
               <div class="text-red-600 font-bold text-[10px]">🚨 Contact Urgence: ${b.emergency}</div>
             </div>
-
             <div class="flex gap-2 pt-1">
               <button onclick="approveRequest('${b.id}')" class="flex-1 ${stockOk ? 'bg-emerald-600 active:bg-emerald-700 text-white' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} font-black text-xs py-3 rounded-xl shadow">
                 ${stockOk ? '✅ Valider & Bloquer Stock' : '🚫 Stock Insuffisant'}
               </button>
-              <button onclick="rejectRequest('${b.id}')" class="bg-red-100 text-red-700 active:bg-red-200 font-bold text-xs px-4 py-3 rounded-xl border border-red-300">
-                ❌ Refuser
-              </button>
+              <button onclick="rejectRequest('${b.id}')" class="bg-red-100 text-red-700 active:bg-red-200 font-bold text-xs px-4 py-3 rounded-xl border border-red-300">❌ Refuser</button>
             </div>
           </div>
         `;
@@ -837,25 +730,17 @@
         Object.keys(b.items).forEach(k => {
           if (b.items[k] > 0) {
             const avail = getAvailableStock(b.date, b.slot, k);
-            if (b.items[k] > avail) {
-              missingItems.push(`${INVENTORY[k].name} (Demandé: ${b.items[k]}, Dispo: ${avail})`);
-            }
+            if (b.items[k] > avail) missingItems.push(`${INVENTORY[k].name} (Demandé: ${b.items[k]}, Dispo: ${avail})`);
           }
         });
       }
 
-      if (missingItems.length > 0) {
-        alert(`❌ IMPOSSIBLE DE VALIDER :\nStock insuffisant pour ce créneau :\n- ` + missingItems.join('\n- '));
-        return;
-      }
+      if (missingItems.length > 0) { alert(`❌ IMPOSSIBLE DE VALIDER :\nStock insuffisant pour ce créneau :\n- ` + missingItems.join('\n- ')); return; }
 
       let resp = prompt("Indiquez le nom du responsable qui valide la demande :", respSelect.value !== '__NEW__' ? respSelect.value : '');
       if (!resp) resp = 'Équipe FSC';
 
-      await updateDoc(doc(db, 'bookings', id), {
-        status: 'Non réglé',
-        respNav: resp
-      });
+      await updateDoc(doc(db, 'bookings', id), { status: 'Non réglé', respNav: resp });
 
       if (b.phone && confirm("Demande validée ! Souhaitez-vous envoyer un SMS de confirmation au client ?")) {
         sendSmsConfirmation(b.phone, b.client, b.date, b.slot, b.items);
@@ -864,10 +749,7 @@
     };
 
     window.rejectRequest = async function(id) {
-      if (confirm("Supprimer définitivement cette demande client ?")) {
-        await deleteDoc(doc(db, 'bookings', id));
-        renderAll();
-      }
+      if (confirm("Supprimer définitivement cette demande client ?")) { await deleteDoc(doc(db, 'bookings', id)); renderAll(); }
     };
 
     function renderGrid() {
@@ -875,9 +757,9 @@
       const gridTable = document.getElementById('grid-dispo-table');
       gridTable.innerHTML = '';
 
-      const parts = selectedDate.split('-');
-      const d = new Date(parts[0], parts[1] - 1, parts[2]);
-      const dayOfWeek = d.getDay();
+      const [y, m, d] = selectedDate.split('-').map(Number);
+      const chosenDate = new Date(y, m - 1, d);
+      const dayOfWeek = chosenDate.getDay();
       const isLongeDay = (dayOfWeek === 0 || dayOfWeek === 2 || dayOfWeek === 4);
 
       SLOTS.forEach(slot => {
@@ -898,7 +780,6 @@
             rowHtml += `<td onclick="startBookingFromGrid('${slot}', '${key}')" class="p-2 border-b border-slate-200 bg-emerald-100 active:bg-emerald-200 text-emerald-800 font-bold cursor-pointer text-xs">➕ ${avail} dispo</td>`;
           }
         });
-
         rowHtml += `</tr>`;
         gridTable.innerHTML += rowHtml;
       });
@@ -908,7 +789,8 @@
       const weekContainer = document.getElementById('week-container');
       weekContainer.innerHTML = '';
 
-      let curr = new Date(dateInput.value);
+      const [yIn, mIn, dIn] = dateInput.value.split('-').map(Number);
+      let curr = new Date(yIn, mIn - 1, dIn);
       let day = curr.getDay();
       let diff = curr.getDate() - day + (day === 0 ? -6 : 1);
       let monday = new Date(curr.setDate(diff));
@@ -939,11 +821,7 @@
           dayHtml += `<div class="space-y-1">`;
           dayBookings.forEach(b => {
             let itemsSummary = [];
-            if (b.items) {
-              Object.keys(b.items).forEach(k => {
-                if (b.items[k] > 0) itemsSummary.push(`${b.items[k]}x ${INVENTORY[k].name}`);
-              });
-            }
+            if (b.items) { Object.keys(b.items).forEach(k => { if (b.items[k] > 0) itemsSummary.push(`${b.items[k]}x ${INVENTORY[k].name}`); }); }
             dayHtml += `
               <div class="bg-white p-2.5 rounded-xl border text-xs flex justify-between items-center shadow-xs">
                 <div>
@@ -956,7 +834,6 @@
           });
           dayHtml += `</div>`;
         }
-
         dayHtml += `</div>`;
         weekContainer.innerHTML += dayHtml;
       }
@@ -964,19 +841,12 @@
 
     function buildBookingsCards(dayBookings) {
       const activeBookings = dayBookings.filter(b => b.status !== 'EN_ATTENTE');
-
-      if (activeBookings.length === 0) {
-        return `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs italic border border-slate-200">Aucune réservation confirmée pour cette journée.</div>`;
-      }
+      if (activeBookings.length === 0) return `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs italic border border-slate-200">Aucune réservation confirmée pour cette journée.</div>`;
 
       let html = '';
       activeBookings.forEach((b) => {
         let itemsSummary = [];
-        if (b.items) {
-          Object.keys(b.items).forEach(k => {
-            if (b.items[k] > 0) itemsSummary.push(`${b.items[k]}x ${INVENTORY[k].name}`);
-          });
-        }
+        if (b.items) { Object.keys(b.items).forEach(k => { if (b.items[k] > 0) itemsSummary.push(`${b.items[k]}x ${INVENTORY[k].name}`); }); }
 
         const slotStarted = hasSlotStarted(b.date, b.slot);
         const lateAlert = (!b.returned && isOverdue(b.date, b.slot));
@@ -999,34 +869,28 @@
                 </button>
               </div>
             </div>
-
             <div class="bg-slate-50 p-2 rounded-xl text-xs space-y-1 border border-slate-100">
               <div class="font-bold text-slate-700">🏄‍♂️ ${itemsSummary.join(', ')}</div>
               ${b.usersNames ? `<div class="text-[11px] text-slate-600">👥 Participants: ${b.usersNames}</div>` : ''}
               ${b.emergency ? `<div class="text-[10px] text-red-600 font-bold">🚨 Urgence: ${b.emergency}</div>` : ''}
               <div class="text-[10px] text-slate-500 pt-0.5">👤 Prise en charge: <span class="font-bold text-blue-700">${b.respNav || 'N/A'}</span></div>
             </div>
-
             <div class="flex items-center justify-between pt-1 border-t border-slate-100">
               <div>
-                ${!slotStarted ? `
-                  <span class="text-[11px] font-bold text-slate-500 bg-slate-100 border px-2.5 py-1 rounded-xl">⏳ À venir</span>
-                ` : `
+                ${!slotStarted ? `<span class="text-[11px] font-bold text-slate-500 bg-slate-100 border px-2.5 py-1 rounded-xl">⏳ À venir</span>` : `
                   <label class="flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
                     <input type="checkbox" ${b.returned ? 'checked' : ''} data-id="${b.id}" class="toggle-returned w-5 h-5 accent-emerald-600 rounded">
                     <span class="text-xs font-bold ${b.returned ? 'text-emerald-700' : (lateAlert ? 'text-red-600 font-black animate-ping' : 'text-red-700')}">
-                      ${b.returned ? '⚓ Rentré' : (lateAlert ? '⚠️ RETARD EN MER' : '🚨 Sur l\'eau')}
+                      ${b.returned ? '⚓ Rentré' : (lateAlert ? '⚠️ RETARD' : '🚨 Sur l\'eau')}
                     </span>
                   </label>
                 `}
               </div>
-
               <div class="flex gap-1.5">
                 <button data-id="${b.id}" class="edit-btn bg-blue-50 text-blue-700 font-bold text-xs px-3 py-1.5 rounded-xl border border-blue-200">✏️ Modifier</button>
                 <button data-id="${b.id}" class="delete-btn bg-red-50 text-red-600 font-bold text-xs px-2.5 py-1.5 rounded-xl border border-red-200">🗑️</button>
               </div>
             </div>
-            
             ${b.returned && b.returnedBy ? `<div class="text-[10px] text-emerald-800 font-bold text-right">✓ Réceptionné par: ${b.returnedBy}</div>` : ''}
           </div>
         `;
@@ -1040,45 +904,30 @@
       
       const selectedDate = dateInput.value;
       const dayBookings = bookings.filter(b => b.date === selectedDate);
-      const pendingCount = bookings.filter(b => b.status === 'EN_ATTENTE').length;
-
-      document.getElementById('pending-count').innerText = pendingCount;
       
-      let totalRev = 0;
-      let onWaterCount = 0;
-      let activeOnWaterList = [];
-
+      document.getElementById('pending-count').innerText = bookings.filter(b => b.status === 'EN_ATTENTE').length;
+      
+      let totalRev = 0; let onWaterCount = 0; let activeOnWaterList = [];
       dayBookings.forEach((b) => {
         if (b.status !== 'EN_ATTENTE') {
           totalRev += b.totalPrice;
-          const slotStarted = hasSlotStarted(b.date, b.slot);
-          if (slotStarted && !b.returned) {
-            onWaterCount++;
-            activeOnWaterList.push(b);
-          }
+          if (hasSlotStarted(b.date, b.slot) && !b.returned) { onWaterCount++; activeOnWaterList.push(b); }
         }
       });
 
       const cardsHtml = buildBookingsCards(dayBookings);
       document.getElementById('bookings-cards-day').innerHTML = cardsHtml;
       document.getElementById('bookings-cards-grid').innerHTML = cardsHtml;
-
       document.getElementById('total-count').innerText = dayBookings.filter(b => b.status !== 'EN_ATTENTE').length;
       document.getElementById('total-on-water-count').innerText = onWaterCount;
       document.getElementById('total-revenue').innerText = `${totalRev} € 📊`;
 
-      const onWaterPanel = document.getElementById('on-water-panel');
       const onWaterList = document.getElementById('on-water-list');
-
       if (activeOnWaterList.length > 0) {
         onWaterList.innerHTML = '';
         activeOnWaterList.forEach(b => {
           let itemsArr = [];
-          if (b.items) {
-            Object.keys(b.items).forEach(k => {
-              if (b.items[k] > 0) itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`);
-            });
-          }
+          if (b.items) { Object.keys(b.items).forEach(k => { if (b.items[k] > 0) itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`); }); }
           const late = isOverdue(b.date, b.slot);
 
           onWaterList.innerHTML += `
@@ -1096,9 +945,7 @@
             </div>
           `;
         });
-      } else {
-        onWaterList.innerHTML = `<p class="text-xs text-slate-400 italic">Aucun client actuellement sur l'eau.</p>`;
-      }
+      } else { onWaterList.innerHTML = `<p class="text-xs text-slate-400 italic">Aucun client actuellement sur l'eau.</p>`; }
 
       document.querySelectorAll('.quick-return-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
@@ -1108,195 +955,102 @@
           await updateDoc(doc(db, 'bookings', docId), { returned: true, returnedBy: returnedBy });
         });
       });
-
       document.querySelectorAll('.toggle-returned').forEach(chk => {
         chk.addEventListener('change', async (e) => {
           const docId = e.target.getAttribute('data-id');
           const isChecked = e.target.checked;
           let returnedBy = '';
-          if (isChecked) {
-            returnedBy = prompt("Nom du responsable qui réceptionne le matériel :", respSelect.value !== '__NEW__' ? respSelect.value : '');
-            if (!returnedBy) returnedBy = 'Équipe Plage';
-          }
+          if (isChecked) { returnedBy = prompt("Nom du responsable qui réceptionne le matériel :", respSelect.value !== '__NEW__' ? respSelect.value : ''); if (!returnedBy) returnedBy = 'Équipe Plage'; }
           await updateDoc(doc(db, 'bookings', docId), { returned: isChecked, returnedBy: returnedBy });
         });
       });
-
       document.querySelectorAll('.toggle-paid').forEach(btn => {
         btn.addEventListener('click', async (e) => {
           const docId = e.target.getAttribute('data-id');
-          const currentStatus = e.target.getAttribute('data-status');
-          const newStatus = (currentStatus === 'Réglé') ? 'Non réglé' : 'Réglé';
-          await updateDoc(doc(db, 'bookings', docId), { status: newStatus });
+          await updateDoc(doc(db, 'bookings', docId), { status: (e.target.getAttribute('data-status') === 'Réglé') ? 'Non réglé' : 'Réglé' });
         });
       });
-
-      document.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => openEditModal(e.target.getAttribute('data-id')));
-      });
-
+      document.querySelectorAll('.edit-btn').forEach(btn => { btn.addEventListener('click', (e) => openEditModal(e.target.getAttribute('data-id'))); });
       document.querySelectorAll('.delete-btn').forEach(btn => {
         btn.addEventListener('click', async (e) => {
-          const docId = e.target.getAttribute('data-id');
-          if (confirm("Confirmer la suppression de cette réservation ?")) {
-            await deleteDoc(doc(db, 'bookings', docId));
-          }
+          if (confirm("Confirmer la suppression de cette réservation ?")) { await deleteDoc(doc(db, 'bookings', e.target.getAttribute('data-id'))); }
         });
       });
 
-      renderPendingRequests();
-      renderGrid();
-      renderWeek();
+      renderPendingRequests(); renderGrid(); renderWeek();
     }
 
     window.openEditModal = function(id) {
       const b = bookings.find(item => item.id === id);
       if (!b) return;
-
-      document.getElementById('edit-id').value = b.id;
-      document.getElementById('edit-slot').value = b.slot;
-      document.getElementById('edit-resp-name').value = b.respNav || '';
-      document.getElementById('edit-client-name').value = b.client || '';
-      document.getElementById('edit-is-member').checked = b.isMember || false;
-      document.getElementById('edit-client-phone').value = b.phone || '';
-      document.getElementById('edit-users-names').value = b.usersNames || '';
-      document.getElementById('edit-emergency-contact').value = b.emergency || '';
+      document.getElementById('edit-id').value = b.id; document.getElementById('edit-slot').value = b.slot;
+      document.getElementById('edit-resp-name').value = b.respNav || ''; document.getElementById('edit-client-name').value = b.client || '';
+      document.getElementById('edit-is-member').checked = b.isMember || false; document.getElementById('edit-client-phone').value = b.phone || '';
+      document.getElementById('edit-users-names').value = b.usersNames || ''; document.getElementById('edit-emergency-contact').value = b.emergency || '';
       document.getElementById('edit-payment-status').value = b.status || 'Non réglé';
-
-      Object.keys(INVENTORY).forEach(key => {
-        const qty = (b.items && b.items[key]) ? b.items[key] : 0;
-        const el = document.getElementById(`edit-qty-${key}`);
-        if (el) el.value = qty;
-      });
-
+      Object.keys(INVENTORY).forEach(key => { const el = document.getElementById(`edit-qty-${key}`); if (el) el.value = (b.items && b.items[key]) ? b.items[key] : 0; });
       document.getElementById('edit-modal').classList.remove('hidden');
     };
 
-    window.closeEditModal = function() {
-      document.getElementById('edit-modal').classList.add('hidden');
-    };
-
-    window.handleModalBackdropClick = function(e) {
-      if (e.target.id === 'edit-modal') closeEditModal();
-    };
+    window.closeEditModal = function() { document.getElementById('edit-modal').classList.add('hidden'); };
+    window.handleModalBackdropClick = function(e) { if (e.target.id === 'edit-modal') closeEditModal(); };
 
     editForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const docId = document.getElementById('edit-id').value;
-      const newSlot = document.getElementById('edit-slot').value;
-      const currentDate = dateInput.value;
-      const isMember = document.getElementById('edit-is-member').checked;
-
-      let selectedItems = {};
-      let totalPrice = 0;
-      let totalQty = 0;
+      const docId = document.getElementById('edit-id').value; const newSlot = document.getElementById('edit-slot').value;
+      const currentDate = dateInput.value; const isMember = document.getElementById('edit-is-member').checked;
+      let selectedItems = {}; let totalPrice = 0; let totalQty = 0;
 
       for (let key of Object.keys(INVENTORY)) {
         const qty = parseInt(document.getElementById(`edit-qty-${key}`).value) || 0;
         if (qty > 0) {
           const avail = getAvailableStock(currentDate, newSlot, key, docId);
-          if (qty > avail) {
-            alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`);
-            return;
-          }
+          if (qty > avail) { alert(`Stock insuffisant pour ${INVENTORY[key].name} !`); return; }
           const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
-          selectedItems[key] = qty;
-          totalPrice += qty * price;
-          totalQty += qty;
+          selectedItems[key] = qty; totalPrice += qty * price; totalQty += qty;
         }
       }
-
-      if (totalQty === 0) {
-        alert("Veuillez sélectionner au moins un matériel ou une séance.");
-        return;
-      }
-
-      const bookingRef = doc(db, 'bookings', docId);
-      await updateDoc(bookingRef, {
-        slot: newSlot,
-        respNav: document.getElementById('edit-resp-name').value,
-        client: document.getElementById('edit-client-name').value,
-        isMember: isMember,
-        phone: document.getElementById('edit-client-phone').value || '',
-        usersNames: document.getElementById('edit-users-names').value || '',
-        emergency: document.getElementById('edit-emergency-contact').value || '',
-        status: document.getElementById('edit-payment-status').value,
-        items: selectedItems,
-        totalPrice: totalPrice
+      if (totalQty === 0) { alert("Veuillez sélectionner au moins un matériel."); return; }
+      await updateDoc(doc(db, 'bookings', docId), {
+        slot: newSlot, respNav: document.getElementById('edit-resp-name').value, client: document.getElementById('edit-client-name').value,
+        isMember: isMember, phone: document.getElementById('edit-client-phone').value || '', usersNames: document.getElementById('edit-users-names').value || '',
+        emergency: document.getElementById('edit-emergency-contact').value || '', status: document.getElementById('edit-payment-status').value, items: selectedItems, totalPrice: totalPrice
       });
-
       closeEditModal();
     });
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const selectedDate = dateInput.value;
-      const selectedSlot = formSlotSelect.value;
-      const isMember = formIsMemberCheck.checked;
-      
-      let respName = respSelect.value;
-      if (respName === '__NEW__') respName = respCustom.value.trim();
+      const selectedDate = dateInput.value; const selectedSlot = formSlotSelect.value; const isMember = formIsMemberCheck.checked;
+      let respName = respSelect.value; if (respName === '__NEW__') respName = respCustom.value.trim();
+      if (!respName) { alert("Veuillez choisir le responsable de la réservation."); respSelect.focus(); return; }
 
-      if (!respName) {
-        alert("Veuillez choisir le responsable de la réservation.");
-        respSelect.focus();
-        return;
-      }
-
-      let selectedItems = {};
-      let totalPrice = 0;
-      let totalQty = 0;
-
+      let selectedItems = {}; let totalPrice = 0; let totalQty = 0;
       for (let key of Object.keys(INVENTORY)) {
         const el = document.getElementById(`qty-${key}`);
         if (el) {
           const qty = parseInt(el.value) || 0;
           if (qty > 0) {
             const avail = getAvailableStock(selectedDate, selectedSlot, key);
-            if (qty > avail) {
-              alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`);
-              return;
-            }
+            if (qty > avail) { alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`); return; }
             const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
-            selectedItems[key] = qty;
-            totalPrice += qty * price;
-            totalQty += qty;
+            selectedItems[key] = qty; totalPrice += qty * price; totalQty += qty;
           }
         }
       }
-
-      if (totalQty === 0) {
-        alert("Veuillez sélectionner au moins un matériel ou une séance.");
-        return;
-      }
+      if (totalQty === 0) { alert("Veuillez sélectionner au moins un matériel ou une séance."); return; }
 
       await addDoc(bookingsCol, {
-        date: selectedDate,
-        slot: selectedSlot,
-        respNav: respName,
-        client: document.getElementById('client-name').value,
-        isMember: isMember,
-        phone: document.getElementById('client-phone').value || '',
-        usersNames: document.getElementById('users-names').value || '',
-        emergency: document.getElementById('emergency-contact').value || '',
-        status: document.getElementById('payment-status').value,
-        returned: false,
-        items: selectedItems,
-        totalPrice: totalPrice,
-        createdAt: Date.now()
+        date: selectedDate, slot: selectedSlot, respNav: respName, client: document.getElementById('client-name').value, isMember: isMember,
+        phone: document.getElementById('client-phone').value || '', usersNames: document.getElementById('users-names').value || '',
+        emergency: document.getElementById('emergency-contact').value || '', status: document.getElementById('payment-status').value,
+        returned: false, items: selectedItems, totalPrice: totalPrice, createdAt: Date.now()
       });
 
-      respSelect.value = '';
-      respCustom.value = '';
-      respCustom.classList.add('hidden');
-      document.getElementById('client-name').value = '';
-      document.getElementById('client-phone').value = '';
-      document.getElementById('users-names').value = '';
-      document.getElementById('emergency-contact').value = '';
-      document.getElementById('payment-status').value = 'Non réglé';
-      formIsMemberCheck.checked = false;
-      
-      updateEquipmentSelectors();
+      respSelect.value = ''; respCustom.value = ''; respCustom.classList.add('hidden');
+      document.getElementById('client-name').value = ''; document.getElementById('client-phone').value = '';
+      document.getElementById('users-names').value = ''; document.getElementById('emergency-contact').value = '';
+      document.getElementById('payment-status').value = 'Non réglé'; formIsMemberCheck.checked = false; updateEquipmentSelectors();
     });
 
     dateInput.addEventListener('change', renderAll);
