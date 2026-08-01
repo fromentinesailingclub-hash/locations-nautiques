@@ -138,7 +138,7 @@
           <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-200">
             <label class="flex items-center gap-2 cursor-pointer">
               <input type="checkbox" id="form-is-member" class="w-4 h-4 accent-blue-600 rounded">
-              <span class="text-xs font-black text-blue-900">Adhérent FSC 2026 (-5 € / matériel)</span>
+              <span class="text-xs font-black text-blue-900">Adhérent FSC 2026 (-5 € / prestation)</span>
             </label>
           </div>
 
@@ -159,7 +159,7 @@
           </div>
 
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1.5">🏄‍♂️ Choix du Matériel :</label>
+            <label class="block text-xs font-bold text-slate-600 mb-1.5">🏄‍♂️ Choix du Matériel / Activité :</label>
             <div id="equipment-selection" class="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200"></div>
           </div>
 
@@ -203,6 +203,7 @@
                 <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">K. Simple (1)</th>
                 <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Paddle (5)</th>
                 <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Rescue (1)</th>
+                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Longe Côte (20)</th>
               </tr>
             </thead>
             <tbody id="grid-dispo-table" class="divide-y divide-slate-200 font-medium"></tbody>
@@ -248,7 +249,7 @@
         <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-200">
           <label class="flex items-center gap-2 cursor-pointer">
             <input type="checkbox" id="edit-is-member" class="w-4 h-4 accent-blue-600 rounded">
-            <span class="text-xs font-bold text-blue-900">Adhérent FSC 2026 (-5 € / matériel)</span>
+            <span class="text-xs font-bold text-blue-900">Adhérent FSC 2026 (-5 € / prestation)</span>
           </label>
         </div>
         <div>
@@ -261,7 +262,7 @@
         </div>
         <input type="text" id="edit-emergency-contact" placeholder="Contact Urgence" class="w-full border border-amber-300 rounded-xl p-2.5 text-xs bg-amber-50">
         <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Quantités de matériel</label>
+          <label class="block text-[10px] font-bold text-slate-500 mb-1">Quantités de matériel / séances</label>
           <div id="edit-equipment-selection" class="space-y-2 bg-slate-50 p-2.5 rounded-xl border"></div>
         </div>
         <select id="edit-payment-status" class="w-full border rounded-xl p-2.5 text-xs font-bold">
@@ -336,7 +337,8 @@
       kayak_double: { name: "Kayak Double", max: 2, price: 20 },
       kayak_simple: { name: "Kayak Simple", max: 1, price: 15 },
       paddle: { name: "Paddle", max: 5, price: 15 },
-      rescue: { name: "Rescue Board", max: 1, price: 15 }
+      rescue: { name: "Rescue Board", max: 1, price: 15 },
+      longe_cote: { name: "Longe Côte (avec combi)", max: 20, price: 14 }
     };
 
     const SLOTS = [
@@ -344,7 +346,7 @@
       "11:00 - 12:00", "11:30 - 12:30", "12:00 - 13:00", "12:30 - 13:30",
       "13:00 - 14:00", "13:30 - 14:30", "14:00 - 15:00", "14:30 - 15:30",
       "15:00 - 16:00", "15:30 - 16:30", "16:00 - 17:00", "16:30 - 17:30",
-      "17:00 - 18:00", "17:30 - 18:30"
+      "17:00 - 18:00", "17:30 - 18:30", "18:00 - 19:00"
     ];
 
     let bookings = [];
@@ -418,6 +420,19 @@
       renderAll();
     });
 
+    function isLongeCoteAvailableForAdmin() {
+      if (!dateInput.value || !formSlotSelect.value) return false;
+      
+      const parts = dateInput.value.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayOfWeek = d.getDay(); // 0 = Dim, 2 = Mar, 4 = Jeu
+
+      const isAllowedDay = (dayOfWeek === 0 || dayOfWeek === 2 || dayOfWeek === 4);
+      const is10amSlot = formSlotSelect.value.startsWith("10:00");
+
+      return isAllowedDay && is10amSlot;
+    }
+
     function generateCsvData(bookingList) {
       let csvRows = [];
       csvRows.push(["Date", "Créneau", "Client", "Adhérent", "Téléphone", "Prise en charge", "Matériels", "Pratiquants", "Urgence", "Statut Paiement", "Prix", "Statut Mer"].join(";"));
@@ -430,7 +445,7 @@
           });
         }
         
-        let clientClean = (b.client || '').replace(/^Demande:\s*/i, '').replace(/;/g, ',');
+        let clientClean = (b.client || '').replace(/^Demande:\s*/i, '').replace(/\s*\(Adhérent\)$/i, '').replace(/;/g, ',');
         let usersClean = (b.usersNames || '').replace(/;/g, ',');
         let emergencyClean = (b.emergency || '').replace(/;/g, ',');
         let itemsClean = itemsArr.join(' + ').replace(/;/g, ',');
@@ -497,7 +512,7 @@
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
       const todayStr = `${year}-${month}-${day}`;
 
       if (dateStr < todayStr) return true;
@@ -515,7 +530,7 @@
       const now = new Date();
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
       const todayStr = `${year}-${month}-${day}`;
 
       if (dateStr < todayStr) return true;
@@ -556,8 +571,8 @@
       const selectedDate = dateInput.value;
       const selectedSlot = formSlotSelect.value;
       const isMember = formIsMemberCheck.checked;
+      const longeAvailable = isLongeCoteAvailableForAdmin();
 
-      // Conservation des valeurs déjà saisies au lieu de les réinitialiser
       let currentValues = {};
       Object.keys(INVENTORY).forEach(key => {
         const inputEl = document.getElementById(`qty-${key}`);
@@ -568,6 +583,8 @@
       editEqContainer.innerHTML = '';
 
       Object.keys(INVENTORY).forEach(key => {
+        if (key === 'longe_cote' && !longeAvailable) return;
+
         const avail = getAvailableStock(selectedDate, selectedSlot, key);
         const isTarget = (selectedKeyToIncrement === key && avail > 0);
         let initVal = currentValues[key] || 0;
@@ -581,7 +598,7 @@
             <div>
               <span class="font-bold text-slate-800 text-xs block">${INVENTORY[key].name}</span>
               <span class="text-[10px] ${avail > 0 ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}">
-                ${avail} dispo (${itemPrice}€/h ${isMember ? '-5€ Adhérent' : ''})
+                ${avail} dispo (${itemPrice}€/séance ${isMember ? '-5€ Adhérent' : ''})
               </span>
             </div>
             <input type="hidden" id="qty-${key}" value="${initVal}" max="${avail}">
@@ -649,10 +666,10 @@
       });
 
       let eqDetails = Object.keys(INVENTORY)
-        .map(k => `- ${INVENTORY[k].name} : ${summaryByEq[k]} loué(s)`)
+        .map(k => `- ${INVENTORY[k].name} : ${summaryByEq[k]} loué(s)/réservé(s)`)
         .join('\n');
 
-      alert(`📊 RÉCAPITULATIF CAISSE DU ${selectedDate}\n\n💰 Recettes Totales : ${total} €\n✅ Réglé (En caisse) : ${totalPaid} €\n⏳ Non réglé : ${totalUnpaid} €\n\n🏄‍♂️ MATÉRIELS LOUÉS :\n${eqDetails}`);
+      alert(`📊 RÉCAPITULATIF CAISSE DU ${selectedDate}\n\n💰 Recettes Totales : ${total} €\n✅ Réglé (En caisse) : ${totalPaid} €\n⏳ Non réglé : ${totalUnpaid} €\n\n🏄‍♂️ MATÉRIELS & ACTIVITÉS :\n${eqDetails}`);
     };
 
     window.switchView = function(view) {
@@ -770,7 +787,6 @@
       });
     }
 
-    // SMS AVEC ACCORD PARFAIT DES PLURIELS (AVEC "S")
     window.sendSmsConfirmation = function(phone, clientName, dateStr, slotStr, itemsObj) {
       let rawName = clientName.replace(/^Demande:\s*/i, '').replace(/\s*\(Adhérent\)$/i, '').trim();
       let parts = rawName.split(' ');
@@ -804,9 +820,9 @@
           }
         });
       }
-      const itemsText = itemsArr.length > 0 ? itemsArr.join(', ') : 'votre matériel';
+      const itemsText = itemsArr.length > 0 ? itemsArr.join(', ') : 'votre prestation';
 
-      const message = `Bonjour ${firstName}, votre réservation au Fromentine Sailing Club pour ${itemsText} le ${formattedDate} ${formattedSlot} est confirmée ! On se retrouve à la cabane du club sur la plage. Le règlement se fera directement sur place (CB ou espèces). À très vite sur l'eau !`;
+      const message = `Bonjour ${firstName}, votre réservation au Fromentine Sailing Club pour ${itemsText} le ${formattedDate} ${formattedSlot} est confirmée ! On se retrouve à la cabane du club sur la plage. Le règlement se fera directement sur place (CB ou espèces). À très vite !`;
       
       const cleanPhone = phone.replace(/\s+/g, '');
       window.open(`sms:${cleanPhone}?body=${encodeURIComponent(message)}`, '_self');
@@ -859,10 +875,20 @@
       const gridTable = document.getElementById('grid-dispo-table');
       gridTable.innerHTML = '';
 
+      const parts = selectedDate.split('-');
+      const d = new Date(parts[0], parts[1] - 1, parts[2]);
+      const dayOfWeek = d.getDay();
+      const isLongeDay = (dayOfWeek === 0 || dayOfWeek === 2 || dayOfWeek === 4);
+
       SLOTS.forEach(slot => {
         let rowHtml = `<tr><td class="sticky left-0 z-10 bg-slate-100 p-2 border-b border-r border-slate-300 font-bold text-slate-800 text-[11px] shadow-xs">${slot}</td>`;
         
         Object.keys(INVENTORY).forEach(key => {
+          if (key === 'longe_cote' && (!isLongeDay || !slot.startsWith('10:00'))) {
+            rowHtml += `<td class="p-2 border-b border-slate-200 bg-slate-100 text-slate-400 text-[10px]">Hors créneau</td>`;
+            return;
+          }
+
           const avail = getAvailableStock(selectedDate, slot, key);
           const max = INVENTORY[key].max;
           
@@ -1181,7 +1207,7 @@
       }
 
       if (totalQty === 0) {
-        alert("Veuillez sélectionner au moins un matériel.");
+        alert("Veuillez sélectionner au moins un matériel ou une séance.");
         return;
       }
 
@@ -1222,22 +1248,25 @@
       let totalQty = 0;
 
       for (let key of Object.keys(INVENTORY)) {
-        const qty = parseInt(document.getElementById(`qty-${key}`).value) || 0;
-        if (qty > 0) {
-          const avail = getAvailableStock(selectedDate, selectedSlot, key);
-          if (qty > avail) {
-            alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`);
-            return;
+        const el = document.getElementById(`qty-${key}`);
+        if (el) {
+          const qty = parseInt(el.value) || 0;
+          if (qty > 0) {
+            const avail = getAvailableStock(selectedDate, selectedSlot, key);
+            if (qty > avail) {
+              alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`);
+              return;
+            }
+            const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
+            selectedItems[key] = qty;
+            totalPrice += qty * price;
+            totalQty += qty;
           }
-          const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
-          selectedItems[key] = qty;
-          totalPrice += qty * price;
-          totalQty += qty;
         }
       }
 
       if (totalQty === 0) {
-        alert("Veuillez sélectionner au moins un matériel.");
+        alert("Veuillez sélectionner au moins un matériel ou une séance.");
         return;
       }
 
