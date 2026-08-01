@@ -15,9 +15,9 @@
       <p class="text-blue-100 text-xs">Formulaire de Demande de Location</p>
     </header>
 
-    <!-- BOUTON NOUVEL ONGLET LONGE CÔTE -->
-    <a href="longe_cote.html" target="_blank" class="block w-full bg-cyan-600 active:bg-cyan-700 text-white font-black text-center py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-md border-2 border-cyan-400">
-      🌊 Inscription Longe Côte (Ouvrir dans un nouvel onglet) ↗️
+    <!-- BOUTON NOUVEL ONGLET LONGE CÔTE (BIEN VISIBLE EN HAUT) -->
+    <a href="longe_cote.html" target="_blank" class="block w-full bg-cyan-600 active:bg-cyan-700 text-white font-black text-center py-4 rounded-2xl text-xs uppercase tracking-wider shadow-md border-2 border-cyan-400">
+      🌊 Inscription Longe Côte (Nouvel onglet) ↗️
     </a>
 
     <!-- ÉCRAN EN ATTENTE -->
@@ -166,7 +166,7 @@
     dateInput.value = todayStr;
     dateInput.min = todayStr;
 
-    // FONCTION DE SÉLECTION DYNAMIQUE DE L'HEURE ACTUELLE
+    // FONCTION DE SÉLECTION DYNAMIQUE ET STRICTE DE L'HEURE ACTUELLE
     function populateSlots() {
       slotSelect.innerHTML = '';
       const selectedDate = dateInput.value;
@@ -179,11 +179,9 @@
         const startTimeStr = s.split(' - ')[0]; // Ex: "09:00"
         const [h, min] = startTimeStr.split(':').map(Number);
         
-        // Date exacte de début du créneau
         const [selY, selM, selD] = selectedDate.split('-').map(Number);
         const slotTime = new Date(selY, selM - 1, selD, h, min, 0, 0);
 
-        // Si la date choisie est dans le futur OU si aujourd'hui l'heure du créneau est stricte dans le futur
         if (slotTime > now) {
           slotSelect.innerHTML += `<option value="${s}">${s}</option>`;
           validSlotsCount++;
