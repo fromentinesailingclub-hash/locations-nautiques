@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FSC — Inscription Longe Côte</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-3 sm:p-6">
+  <div class="max-w-md mx-auto space-y-4">
+    
+    <header class="bg-cyan-700 text-white rounded-2xl p-5 shadow-lg text-center space-y-1 relative">
+      <h1 class="text-xl font-black">Fromentine Sailing Club</h1>
+      <p class="text-cyan-100 text-xs">Inscription Séance de Longe Côte</p>
+    </header>
+
+    <div id="pending-screen" class="hidden bg-amber-500 text-slate-900 rounded-2xl p-6 text-center shadow-xl space-y-3">
+      <div class="text-4xl animate-bounce">⏳</div>
+      <h2 class="text-lg font-black">Demande en cours de vérification</h2>
+      <p class="text-xs font-bold text-slate-900/90 leading-relaxed">
+        L'équipe vérifie les places disponibles. <br>
+        <span class="text-sm font-black text-slate-950 block mt-1">📲 Vous allez recevoir un SMS dès la validation !</span>
+      </p>
+    </div>
+
+    <div id="success-screen" class="hidden bg-emerald-600 text-white rounded-2xl p-6 text-center shadow-xl space-y-3">
+      <div class="text-5xl">🎉</div>
+      <h2 class="text-xl font-black">INSCRIPTION VALIDÉE !</h2>
+      <p class="text-xs text-emerald-100">Votre réservation a été acceptée. Un SMS de confirmation vous a été envoyé.</p>
+      <div id="confirmed-details" class="bg-emerald-700/80 p-3 rounded-xl text-left text-xs space-y-1 border border-emerald-500"></div>
+      <button onclick="window.location.reload()" class="mt-2 bg-white text-emerald-800 font-bold text-xs px-4 py-2.5 rounded-xl shadow active:scale-95 transition-all">Faire une autre demande</button>
+    </div>
+
+    <form id="client-form" class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200 space-y-4">
+      
+      <div class="space-y-3 border-b pb-3">
+        <h3 class="font-bold text-xs text-cyan-700 uppercase tracking-wider">1. Vos coordonnées</h3>
+        <div class="grid grid-cols-2 gap-2">
+          <div><label class="block text-[11px] font-bold text-slate-600 mb-1">Nom *</label><input type="text" id="nom" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-cyan-500" required></div>
+          <div><label class="block text-[11px] font-bold text-slate-600 mb-1">Prénom *</label><input type="text" id="prenom" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-cyan-500" required></div>
+        </div>
+        <div><label class="block text-[11px] font-bold text-slate-600 mb-1">Téléphone *</label><input type="tel" id="phone" class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-cyan-500" required></div>
+        <div class="bg-cyan-50/80 p-3 rounded-xl border border-cyan-200">
+          <label class="flex items-center gap-2.5 cursor-pointer">
+            <input type="checkbox" id="is-member" class="w-4 h-4 accent-cyan-600 rounded">
+            <span class="text-xs font-black text-cyan-900">Je suis adhérent FSC 2026 (-5 €)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="space-y-3 border-b pb-3">
+        <h3 class="font-bold text-xs text-cyan-700 uppercase tracking-wider">2. Date de la séance (10h00)</h3>
+        <div class="text-[10px] text-cyan-700 font-bold mb-1">Uniquement Mardi, Jeudi et Dimanche à 10:00.</div>
+        <input type="date" id="date" class="w-full border-2 border-cyan-500 bg-cyan-50 rounded-xl p-2.5 text-xs font-bold text-cyan-900 outline-none" required>
+        <select id="slot" class="w-full border rounded-xl p-2.5 text-xs font-bold bg-slate-50 outline-none" required></select>
+      </div>
+
+      <div class="space-y-3 border-b pb-3">
+        <h3 class="font-bold text-xs text-cyan-700 uppercase tracking-wider">3. Nombre de places</h3>
+        <div class="flex justify-between items-center bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+          <div>
+            <span class="font-bold text-xs block text-slate-800">Séance Longe Côte (Prêt combi inclus)</span>
+            <span class="text-[10px]" id="price-label">14€/personne</span>
+          </div>
+          <select id="qty" class="border rounded-lg px-3 py-1 font-bold text-xs bg-white">
+            <option value="0">0</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option>
+          </select>
+        </div>
+        <div class="bg-cyan-50 p-3 rounded-xl border border-cyan-200 flex justify-between items-center mt-2">
+          <span class="text-xs font-bold text-cyan-900">Montant total estimé :</span>
+          <span id="live-total-price" class="text-lg font-black text-cyan-700">0 €</span>
+        </div>
+      </div>
+
+      <div class="space-y-3">
+        <h3 class="font-bold text-xs text-cyan-700 uppercase tracking-wider">4. Pratiquants & Urgence</h3>
+        <div><textarea id="participants" rows="2" placeholder="Noms et tailles des combinaisons..." class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-cyan-500" required></textarea></div>
+        <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+          <input type="text" id="emergency" placeholder="🚨 Contact Urgence (Nom + N°)" class="w-full border border-amber-300 rounded-lg p-2 text-xs bg-white outline-none" required>
+        </div>
+      </div>
+
+      <button type="submit" class="w-full bg-cyan-700 active:bg-cyan-800 text-white font-black py-4 rounded-xl text-sm uppercase tracking-wider shadow-lg">📩 Envoyer ma demande</button>
+    </form>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getFirestore, collection, addDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    const firebaseConfig = { apiKey: "AIzaSyB2c0RYApUY6wmrnJ2QJtqIVE1ZaIRJqPg", authDomain: "fromentine-sailing-club.firebaseapp.com", projectId: "fromentine-sailing-club", storageBucket: "fromentine-sailing-club.firebasestorage.app", messagingSenderId: "242231430746", appId: "1:242231430746:web:920f676194198d024a5263" };
+    const TELEGRAM_BOT_TOKEN = "8777397757:AAHymn1LylrbO_KVYSmL9vfj9RPKYnV5mDI";
+    const TELEGRAM_CHAT_ID = "6641751783";
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const bookingsCol = collection(db, 'bookings');
+
+    const dateInput = document.getElementById('date');
+    const slotSelect = document.getElementById('slot');
+    const qtySelect = document.getElementById('qty');
+    const isMemberCheck = document.getElementById('is-member');
+    
+    const today = new Date();
+    dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    dateInput.min = dateInput.value;
+
+    function validateDate() {
+      slotSelect.innerHTML = '';
+      if(!dateInput.value) return;
+      const [y, m, d] = dateInput.value.split('-').map(Number);
+      const chosenDate = new Date(y, m - 1, d);
+      const day = chosenDate.getDay();
+      
+      // Mardi = 2, Jeudi = 4, Dimanche = 0
+      if(day !== 0 && day !== 2 && day !== 4) {
+        alert("🌊 Le Longe Côte est uniquement disponible le Mardi, le Jeudi et le Dimanche !");
+        dateInput.value = "";
+        return;
+      }
+      
+      const now = new Date();
+      const slotTime = new Date(y, m - 1, d, 10, 0, 0, 0);
+
+      if(slotTime < now) {
+        slotSelect.innerHTML = `<option value="" disabled selected>⚠️ Créneau de 10:00 déjà passé aujourd'hui</option>`;
+      } else {
+        slotSelect.innerHTML = `<option value="10:00 - 11:00">10:00 - 11:00</option>`;
+      }
+    }
+    dateInput.addEventListener('change', validateDate);
+    validateDate();
+
+    function updatePrice() {
+      const isMember = isMemberCheck.checked;
+      const price = isMember ? 9 : 14;
+      document.getElementById('price-label').innerText = `${price}€/personne ${isMember ? '(Tarif Adhérent)' : ''}`;
+      document.getElementById('live-total-price').innerText = `${(parseInt(qtySelect.value) || 0) * price} €`;
+    }
+    isMemberCheck.addEventListener('change', updatePrice);
+    qtySelect.addEventListener('change', updatePrice);
+    updatePrice();
+
+    document.getElementById('client-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const qty = parseInt(qtySelect.value) || 0;
+      if (!slotSelect.value) { alert("Sélectionnez une date valide avec un créneau disponible."); return; }
+      if (qty === 0) { alert("Veuillez sélectionner au moins 1 place."); return; }
+
+      const isMember = isMemberCheck.checked;
+      const price = isMember ? 9 : 14;
+      const totalPrice = qty * price;
+      
+      const nom = document.getElementById('nom').value.trim();
+      const prenom = document.getElementById('prenom').value.trim();
+      const phoneVal = document.getElementById('phone').value.trim();
+      const dateVal = dateInput.value;
+      const slotVal = slotSelect.value;
+      const partVal = document.getElementById('participants').value.trim();
+
+      const tgMsg = `🌊 <b>NOUVELLE DEMANDE LONGE CÔTE !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()} ${isMember ? '⭐ (ADHÉRENT)' : ''}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à 10:00\n🏄‍♂️ <b>Places :</b> ${qty}x Longe Côte\n👥 <b>Participants :</b> ${partVal}`;
+      const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(tgMsg)}&parse_mode=HTML`;
+      (new Image()).src = url;
+
+      const docRef = await addDoc(bookingsCol, {
+        date: dateVal, slot: slotVal, respNav: 'En attente validation',
+        client: `Demande: ${nom.toUpperCase()} ${prenom}${isMember ? ' (Adhérent)' : ''}`,
+        phone: phoneVal, usersNames: partVal, emergency: document.getElementById('emergency').value,
+        status: 'EN_ATTENTE', returned: false, isMember: isMember, items: { longe_cote: qty },
+        totalPrice: totalPrice, createdAt: Date.now()
+      });
+
+      document.getElementById('client-form').classList.add('hidden');
+      document.getElementById('pending-screen').classList.remove('hidden');
+
+      onSnapshot(doc(db, 'bookings', docRef.id), (docSnap) => {
+        if (docSnap.exists() && docSnap.data().status !== 'EN_ATTENTE') {
+          document.getElementById('pending-screen').classList.add('hidden');
+          document.getElementById('success-screen').classList.remove('hidden');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
