@@ -1,655 +1,1375 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Fromentine Sailing Club — Plage & Sécurité</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .fade-in { animation: fadeIn 0.2s ease-out forwards; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-  </style>
-</head>
-<body class="bg-slate-100 text-slate-800 font-sans min-h-screen p-2 sm:p-4 pb-24 select-none">
-
-  <!-- ÉCRAN DE VERROUILLAGE / MOT DE PASSE -->
-  <div id="auth-screen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
-    <div class="bg-white rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl border border-slate-700">
-      <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto font-bold">🔒</div>
-      <div>
-        <h2 class="text-lg font-black text-slate-900">Espace Responsables</h2>
-        <p class="text-xs text-slate-500 mt-1">Saisissez le code d'accès fourni par le club</p>
-      </div>
-      <form id="auth-form" class="space-y-3">
-        <input type="password" id="auth-password" placeholder="Mot de passe..." class="w-full text-center text-lg font-black tracking-widest border-2 border-slate-200 rounded-2xl p-3 outline-none focus:border-blue-600 bg-slate-50" required>
-        <button type="submit" class="w-full bg-blue-600 active:bg-blue-700 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg uppercase tracking-wider">Accéder à l'application</button>
-      </form>
-      <p id="auth-error" class="text-xs font-bold text-red-500 hidden">❌ Mot de passe incorrect</p>
-    </div>
-  </div>
-
-  <!-- APPLICATION PRINCIPALE -->
-  <div id="app-content" class="max-w-4xl mx-auto space-y-3 hidden">
-    
-    <!-- EN-TÊTE ULTRA CLAIR & CLIQUABLE -->
-    <header class="bg-blue-600 text-white rounded-2xl p-3.5 shadow-md space-y-2">
-      <div class="flex justify-between items-center">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Fromentine Sailing Club — Plage & Sécurité</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
+      .fade-in {
+        animation: fadeIn 0.2s ease-out forwards;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+  </head>
+  <body
+    class="bg-slate-100 text-slate-800 font-sans min-h-screen p-2 sm:p-4 pb-24 select-none"
+  >
+    <!-- ÉCRAN DE VERROUILLAGE / MOT DE PASSE -->
+    <div
+      id="auth-screen"
+      class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white rounded-3xl p-6 max-w-sm w-full text-center space-y-4 shadow-2xl border border-slate-700"
+      >
+        <div
+          class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl flex items-center justify-center text-3xl mx-auto font-bold"
+        >
+          🔒
+        </div>
         <div>
-          <h1 class="text-lg font-black tracking-tight leading-tight">Fromentine Sailing Club</h1>
-          <p class="text-blue-100 text-[11px]">Gestion & Sécurité Plage</p>
+          <h2 class="text-lg font-black text-slate-900">Espace Responsables</h2>
+          <p class="text-xs text-slate-500 mt-1">
+            Saisissez le code d'accès fourni par le club
+          </p>
         </div>
-        <div class="text-right flex items-center gap-2">
-          <div onclick="showDailySummary()" class="cursor-pointer bg-blue-700 hover:bg-blue-800 px-2.5 py-1 rounded-xl border border-blue-500">
-            <span class="block text-[8px] uppercase tracking-wider text-blue-200 font-bold">Recettes (Caisse)</span>
-            <span id="total-revenue" class="text-base font-black text-emerald-300">0 € 📊</span>
-          </div>
-          <button onclick="logout()" title="Déconnexion" class="bg-blue-800 p-2 rounded-xl text-xs font-bold text-blue-200 hover:text-white">🔒</button>
-        </div>
-      </div>
-
-      <!-- RACCOURCIS TACTILES GÉANTS -->
-      <div class="grid grid-cols-3 gap-2 pt-1">
-        <button onclick="scrollToBookings()" class="bg-blue-700/80 active:scale-95 transition-transform rounded-xl p-2 flex items-center justify-between border border-blue-400/40">
-          <span class="text-[10px] font-bold text-blue-100">📋 Résas</span>
-          <span id="total-count" class="text-sm font-black bg-blue-900 px-2 py-0.5 rounded-lg">0</span>
-        </button>
-        <button onclick="switchView('requests')" class="bg-amber-500/90 active:scale-95 transition-transform rounded-xl p-2 flex items-center justify-between border border-amber-300">
-          <span class="text-[10px] font-black text-slate-900">📩 Demandes</span>
-          <span id="pending-count" class="text-sm font-black bg-red-600 text-white px-2 py-0.5 rounded-lg animate-pulse">0</span>
-        </button>
-        <button onclick="toggleOnWaterPanel()" class="bg-blue-700/80 active:scale-95 transition-transform rounded-xl p-2 flex items-center justify-between border border-blue-400/40">
-          <span class="text-[10px] font-bold text-amber-300">🚨 En mer</span>
-          <span id="total-on-water-count" class="text-sm font-black bg-red-600 text-white px-2 py-0.5 rounded-lg">0</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- PANNEAU "SUR L'EAU" EN DIRECT -->
-    <section id="on-water-panel" class="bg-slate-900 text-white rounded-2xl p-4 shadow-xl hidden space-y-3 border-2 border-amber-400/60 fade-in">
-      <div class="flex justify-between items-center border-b border-slate-700 pb-2">
-        <h2 class="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
-          <span class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"></span> Pratiquants "Sur l'eau"
-        </h2>
-        <button onclick="toggleOnWaterPanel()" class="text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-600">❌ Fermer</button>
-      </div>
-      <div id="on-water-list" class="space-y-2 pt-1"></div>
-    </section>
-
-    <!-- BARRE DE NAVIGATION -->
-    <nav class="grid grid-cols-4 bg-white rounded-2xl p-1.5 shadow-sm border border-slate-200 gap-1 text-[11px] font-bold text-center">
-      <button id="tab-day-btn" onclick="switchView('day')" class="py-3 px-1 rounded-xl bg-blue-600 text-white">➕ Saisie</button>
-      <button id="tab-requests-btn" onclick="switchView('requests')" class="py-3 px-1 rounded-xl text-slate-600">📩 Demandes</button>
-      <button id="tab-grid-btn" onclick="switchView('grid')" class="py-3 px-1 rounded-xl text-slate-600">📊 Dispos</button>
-      <button id="tab-week-btn" onclick="switchView('week')" class="py-3 px-1 rounded-xl text-slate-600">📅 Semaine</button>
-    </nav>
-
-    <!-- SELECTEUR DE DATE & BOUTONS D'EXTRACTION CSV -->
-    <section class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-2">
-      <div class="flex items-center justify-between gap-2">
-        <label for="filter-date" class="font-bold text-slate-700 text-xs uppercase tracking-wider">🗓️ Date :</label>
-        <input type="date" id="filter-date" class="border-2 border-blue-500 rounded-xl p-2 text-sm font-bold text-blue-900 bg-blue-50 focus:outline-none flex-1 max-w-[200px]">
-      </div>
-
-      <!-- BOUTONS D'EXPORTATION COMPATIBLES TÉLÉPHONE -->
-      <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
-        <button onclick="exportDailyCsv()" class="bg-emerald-600 active:bg-emerald-700 text-white text-[10px] font-black p-2.5 rounded-xl flex items-center justify-center gap-1 shadow-sm">
-          <span>📲 Exporter le Jour (CSV)</span>
-        </button>
-        <button onclick="exportAllCsv()" class="bg-slate-800 active:bg-slate-900 text-white text-[10px] font-black p-2.5 rounded-xl flex items-center justify-center gap-1 shadow-sm">
-          <span>📚 Exporter Tout le Registre</span>
-        </button>
-      </div>
-    </section>
-
-    <!-- VUE DEMANDES EN ATTENTE -->
-    <div id="view-requests" class="hidden space-y-3">
-      <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
-        <span>📩 Demandes de Réservation en Attente</span>
-      </h2>
-      <div id="pending-requests-list" class="space-y-3"></div>
-    </div>
-
-    <!-- VUE 1 : NOUVELLE RÉSERVATION & SUIVI DU JOUR -->
-    <div id="view-day" class="space-y-4">
-      <section class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3">
-        <h2 class="text-base font-black text-slate-800 flex items-center gap-2 border-b pb-2">
-          <span class="w-3 h-3 bg-blue-600 rounded-full inline-block"></span> 1. Saisir une réservation
-        </h2>
-        <form id="booking-form" class="space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">⏰ Créneau horaire</label>
-            <select id="form-slot" class="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-bold bg-slate-50 outline-none"></select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">👤 Resp Nav / Prise en charge *</label>
-            <select id="client-name-select" class="w-full border border-slate-300 rounded-xl p-3 text-sm font-bold bg-white focus:ring-2 focus:ring-blue-500 outline-none"></select>
-            <input type="text" id="client-name-custom" placeholder="Saisir le nom du nouveau membre..." class="w-full border border-blue-400 rounded-xl p-2.5 text-sm mt-1.5 hidden bg-blue-50 outline-none">
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">🏷️ Nom de la réservation *</label>
-            <input type="text" id="client-name" placeholder="ex: Mr Dupont" class="w-full border border-slate-300 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500" required>
-          </div>
-
-          <!-- Case Adhérent FSC 2026 -->
-          <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-200">
-            <label class="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" id="form-is-member" class="w-4 h-4 accent-blue-600 rounded">
-              <span class="text-xs font-black text-blue-900">Adhérent FSC 2026 (-5 € / prestation)</span>
-            </label>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-bold text-slate-500 mb-1">📞 Téléphone</label>
-              <input type="tel" id="client-phone" placeholder="06 12 34 56 78" class="w-full border border-slate-300 rounded-xl p-2.5 text-xs outline-none">
-            </div>
-            <div>
-              <label class="block text-xs font-bold text-slate-500 mb-1">👥 Participants</label>
-              <input type="text" id="users-names" placeholder="ex: Marc (participe), Paul..." class="w-full border border-slate-300 rounded-xl p-2.5 text-xs outline-none">
-            </div>
-          </div>
-
-          <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
-            <label class="block text-[11px] font-bold text-amber-900 mb-1">🚨 Contact Urgence (Optionnel)</label>
-            <input type="text" id="emergency-contact" placeholder="Nom + N° Téléphone" class="w-full border border-amber-300 rounded-lg p-2 text-xs bg-white outline-none">
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1.5">🏄‍♂️ Choix du Matériel / Activité :</label>
-            <div id="equipment-selection" class="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200"></div>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">💳 Règlement</label>
-            <select id="payment-status" class="w-full border border-slate-300 rounded-xl p-3 text-xs font-bold bg-white">
-              <option value="Non réglé" selected>⏳ Non réglé (Par défaut)</option>
-              <option value="Réglé">✅ Réglé</option>
-            </select>
-          </div>
-
-          <button type="submit" class="w-full bg-blue-600 active:bg-blue-700 text-white font-black py-4 rounded-xl text-base shadow-lg uppercase tracking-wider">
-            ✅ Valider la réservation
+        <form id="auth-form" class="space-y-3">
+          <input
+            type="password"
+            id="auth-password"
+            placeholder="Mot de passe..."
+            class="w-full text-center text-lg font-black tracking-widest border-2 border-slate-200 rounded-2xl p-3 outline-none focus:border-blue-600 bg-slate-50"
+            required
+          />
+          <button
+            type="submit"
+            class="w-full bg-blue-600 active:bg-blue-700 text-white font-black py-3.5 rounded-2xl text-sm shadow-lg uppercase tracking-wider"
+          >
+            Accéder à l'application
           </button>
         </form>
-      </section>
-
-      <section id="bookings-section-day" class="space-y-3">
-        <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
-          <span class="w-3 h-3 bg-emerald-500 rounded-full inline-block"></span> 2. Suivi des Réservations Validées
-        </h2>
-        <div id="bookings-cards-day" class="space-y-2.5"></div>
-      </section>
-    </div>
-
-    <!-- VUE 2 : GRILLE DISPOS -->
-    <div id="view-grid" class="hidden space-y-4">
-      <section class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-3">
-        <div class="flex justify-between items-center border-b pb-2">
-          <h2 class="text-base font-black text-slate-800">Disponibilités par Créneau</h2>
-          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-lg">Cliquer sur le vert pour réserver</span>
-        </div>
-        
-        <div class="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 relative">
-          <table class="w-full text-center text-xs border-separate border-spacing-0">
-            <thead>
-              <tr>
-                <th class="sticky top-0 left-0 z-30 bg-slate-900 text-white p-2.5 text-left border-b border-r border-slate-700 font-bold text-[11px]">Créneau</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Windsurfer LT (2)</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">K. Double (2)</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">K. Simple (1)</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Paddle (5)</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Rescue (1)</th>
-                <th class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]">Longe Côte (20)</th>
-              </tr>
-            </thead>
-            <tbody id="grid-dispo-table" class="divide-y divide-slate-200 font-medium"></tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="space-y-3">
-        <h2 class="text-base font-black text-slate-800">Réservations du Jour</h2>
-        <div id="bookings-cards-grid" class="space-y-2.5"></div>
-      </section>
-    </div>
-
-    <!-- VUE 3 : VUE SEMAINE GLOBAL -->
-    <div id="view-week" class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4">
-      <h2 class="text-base font-black text-slate-800 border-b pb-2">Planning de la Semaine</h2>
-      <div id="week-container" class="space-y-3"></div>
-    </div>
-
-  </div>
-
-  <!-- MODAL EDIT -->
-  <div id="edit-modal" onclick="handleModalBackdropClick(event)" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 fade-in">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl max-h-[90vh] overflow-y-auto space-y-3 border-2 border-blue-500">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="text-base font-bold text-slate-800">✏️ Modifier la Réservation</h3>
-        <button onclick="closeEditModal()" class="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl">❌ Fermer</button>
+        <p id="auth-error" class="text-xs font-bold text-red-500 hidden">
+          ❌ Mot de passe incorrect
+        </p>
       </div>
-      <form id="edit-form" class="space-y-3">
-        <input type="hidden" id="edit-id">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Créneau</label>
-          <select id="edit-slot" class="w-full border rounded-xl p-2.5 text-xs font-bold bg-slate-50"></select>
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Resp Nav / Prise en charge</label>
-          <input type="text" id="edit-resp-name" class="w-full border rounded-xl p-2.5 text-xs font-bold" required>
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Nom de la réservation</label>
-          <input type="text" id="edit-client-name" class="w-full border rounded-xl p-2.5 text-xs font-bold" required>
-        </div>
-        <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-200">
-          <label class="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" id="edit-is-member" class="w-4 h-4 accent-blue-600 rounded">
-            <span class="text-xs font-bold text-blue-900">Adhérent FSC 2026 (-5 € / prestation)</span>
-          </label>
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Téléphone</label>
-          <input type="tel" id="edit-client-phone" class="w-full border rounded-xl p-2.5 text-xs">
-        </div>
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Participants</label>
-          <input type="text" id="edit-users-names" class="w-full border rounded-xl p-2.5 text-xs">
-        </div>
-        <input type="text" id="edit-emergency-contact" placeholder="Contact Urgence" class="w-full border border-amber-300 rounded-xl p-2.5 text-xs bg-amber-50">
-        <div>
-          <label class="block text-[10px] font-bold text-slate-500 mb-1">Quantités de matériel / séances</label>
-          <div id="edit-equipment-selection" class="space-y-2 bg-slate-50 p-2.5 rounded-xl border"></div>
-        </div>
-        <select id="edit-payment-status" class="w-full border rounded-xl p-2.5 text-xs font-bold">
-          <option value="Non réglé">⏳ Non réglé</option>
-          <option value="Réglé">✅ Réglé</option>
-        </select>
-        <div class="flex gap-2 pt-2">
-          <button type="button" onclick="closeEditModal()" class="w-1/2 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs">Annuler</button>
-          <button type="submit" class="w-1/2 bg-blue-600 text-white font-bold py-3 rounded-xl text-xs shadow">Enregistrer</button>
-        </div>
-      </form>
     </div>
-  </div>
 
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-    import { getFirestore, collection, addDoc, updateDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+    <!-- APPLICATION PRINCIPALE -->
+    <div id="app-content" class="max-w-4xl mx-auto space-y-3 hidden">
+      <!-- EN-TÊTE ULTRA CLAIR & CLIQUABLE -->
+      <header
+        class="bg-blue-600 text-white rounded-2xl p-3.5 shadow-md space-y-2"
+      >
+        <div class="flex justify-between items-center">
+          <div>
+            <h1 class="text-lg font-black tracking-tight leading-tight">
+              Fromentine Sailing Club
+            </h1>
+            <p class="text-blue-100 text-[11px]">Gestion & Sécurité Plage</p>
+          </div>
+          <div class="text-right flex items-center gap-2">
+            <div
+              onclick="showDailySummary()"
+              class="cursor-pointer bg-blue-700 hover:bg-blue-800 px-2.5 py-1 rounded-xl border border-blue-500"
+            >
+              <span
+                class="block text-[8px] uppercase tracking-wider text-blue-200 font-bold"
+                >Recettes (Caisse)</span
+              >
+              <span
+                id="total-revenue"
+                class="text-base font-black text-emerald-300"
+                >0 € 📊</span
+              >
+            </div>
+            <button
+              onclick="logout()"
+              title="Déconnexion"
+              class="bg-blue-800 p-2 rounded-xl text-xs font-bold text-blue-200 hover:text-white"
+            >
+              🔒
+            </button>
+          </div>
+        </div>
 
-    const APP_PASSWORD = "FSC2026";
+        <!-- RACCOURCIS TACTILES GÉANTS -->
+        <div class="grid grid-cols-3 gap-2 pt-1">
+          <button
+            onclick="scrollToBookings()"
+            class="bg-blue-700/80 active:scale-95 transition-transform rounded-xl p-2 flex items-center justify-between border border-blue-400/40"
+          >
+            <span class="text-[10px] font-bold text-blue-100">📋 Résas</span>
+            <span
+              id="total-count"
+              class="text-sm font-black bg-blue-900 px-2 py-0.5 rounded-lg"
+              >0</span
+            >
+          </button>
+          <button
+            onclick="switchView('requests')"
+            class="bg-amber-500/90 active:scale-95 transition-transform rounded-xl p-2 flex items-center justify-between border border-amber-300"
+          >
+            <span class="text-[10px] font-black text-slate-900"
+              >📩 Demandes</span
+            >
+            <span
+              id="pending-count"
+              class="text-sm font-black bg-red-600 text-white px-2 py-0.5 rounded-lg animate-pulse"
+              >0</span
+            >
+          </button>
+          <button
+            onclick="toggleOnWaterPanel()"
+            class="bg-blue-700/80 active:scale-95 transition-transform rounded-xl p-2 flex items-center justify-between border border-blue-400/40"
+          >
+            <span class="text-[10px] font-bold text-amber-300">🚨 En mer</span>
+            <span
+              id="total-on-water-count"
+              class="text-sm font-black bg-red-600 text-white px-2 py-0.5 rounded-lg"
+              >0</span
+            >
+          </button>
+        </div>
+      </header>
 
-    const authScreen = document.getElementById('auth-screen');
-    const appContent = document.getElementById('app-content');
-    const authForm = document.getElementById('auth-form');
-    const authError = document.getElementById('auth-error');
+      <!-- PANNEAU "SUR L'EAU" EN DIRECT -->
+      <section
+        id="on-water-panel"
+        class="bg-slate-900 text-white rounded-2xl p-4 shadow-xl hidden space-y-3 border-2 border-amber-400/60 fade-in"
+      >
+        <div
+          class="flex justify-between items-center border-b border-slate-700 pb-2"
+        >
+          <h2
+            class="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2"
+          >
+            <span
+              class="w-2.5 h-2.5 bg-red-500 rounded-full animate-ping"
+            ></span>
+            Pratiquants "Sur l'eau"
+          </h2>
+          <button
+            onclick="toggleOnWaterPanel()"
+            class="text-xs font-bold text-slate-300 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-600"
+          >
+            ❌ Fermer
+          </button>
+        </div>
+        <div id="on-water-list" class="space-y-2 pt-1"></div>
+      </section>
 
-    function checkAuth() {
-      if (localStorage.getItem('fsc_auth_token') === 'GRANTED') {
-        authScreen.classList.add('hidden');
-        appContent.classList.remove('hidden');
-      } else {
-        authScreen.classList.remove('hidden');
-        appContent.classList.add('hidden');
-      }
-    }
+      <!-- BARRE DE NAVIGATION -->
+      <nav
+        class="grid grid-cols-5 bg-white rounded-2xl p-1.5 shadow-sm border border-slate-200 gap-1 text-[11px] font-bold text-center"
+      >
+        <button
+          id="tab-day-btn"
+          onclick="switchView('day')"
+          class="py-3 px-1 rounded-xl bg-blue-600 text-white"
+        >
+          ➕ Saisie
+        </button>
+        <button
+          id="tab-requests-btn"
+          onclick="switchView('requests')"
+          class="py-3 px-1 rounded-xl text-slate-600"
+        >
+          📩 Demandes
+        </button>
+        <button
+          id="tab-grid-btn"
+          onclick="switchView('grid')"
+          class="py-3 px-1 rounded-xl text-slate-600"
+        >
+          📊 Dispos
+        </button>
+        <button
+          id="tab-longe-btn"
+          onclick="switchView('longe')"
+          class="py-3 px-1 rounded-xl text-slate-600"
+        >
+          🌊 Longe
+        </button>
+        <button
+          id="tab-week-btn"
+          onclick="switchView('week')"
+          class="py-3 px-1 rounded-xl text-slate-600"
+        >
+          📅 Semaine
+        </button>
+      </nav>
 
-    authForm.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const inputPass = document.getElementById('auth-password').value.trim();
-      if (inputPass === APP_PASSWORD) {
-        localStorage.setItem('fsc_auth_token', 'GRANTED');
-        authError.classList.add('hidden');
-        checkAuth();
-      } else {
-        authError.classList.remove('hidden');
-      }
-    });
+      <!-- SELECTEUR DE DATE & BOUTONS D'EXTRACTION CSV -->
+      <section
+        class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-2"
+      >
+        <div class="flex items-center justify-between gap-2">
+          <label
+            for="filter-date"
+            class="font-bold text-slate-700 text-xs uppercase tracking-wider"
+            >🗓️ Date :</label
+          >
+          <input
+            type="date"
+            id="filter-date"
+            class="border-2 border-blue-500 rounded-xl p-2 text-sm font-bold text-blue-900 bg-blue-50 focus:outline-none flex-1 max-w-[200px]"
+          />
+        </div>
 
-    window.logout = function() {
-      localStorage.removeItem('fsc_auth_token');
-      checkAuth();
-    };
+        <!-- BOUTONS D'EXPORTATION COMPATIBLES TÉLÉPHONE -->
+        <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+          <button
+            onclick="exportDailyCsv()"
+            class="bg-emerald-600 active:bg-emerald-700 text-white text-[10px] font-black p-2.5 rounded-xl flex items-center justify-center gap-1 shadow-sm"
+          >
+            <span>📲 Exporter le Jour (CSV)</span>
+          </button>
+          <button
+            onclick="exportAllCsv()"
+            class="bg-slate-800 active:bg-slate-900 text-white text-[10px] font-black p-2.5 rounded-xl flex items-center justify-center gap-1 shadow-sm"
+          >
+            <span>📚 Exporter Tout le Registre</span>
+          </button>
+        </div>
+      </section>
 
-    checkAuth();
+      <!-- VUE DEMANDES EN ATTENTE -->
+      <div id="view-requests" class="hidden space-y-3">
+        <h2 class="text-base font-black text-slate-800 flex items-center gap-2">
+          <span>📩 Demandes de Réservation en Attente</span>
+        </h2>
+        <div id="pending-requests-list" class="space-y-3"></div>
+      </div>
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyB2c0RYApUY6wmrnJ2QJtqIVE1ZaIRJqPg",
-      authDomain: "fromentine-sailing-club.firebaseapp.com",
-      projectId: "fromentine-sailing-club",
-      storageBucket: "fromentine-sailing-club.firebasestorage.app",
-      messagingSenderId: "242231430746",
-      appId: "1:242231430746:web:920f676194198d024a5263",
-      measurementId: "G-NZ18JKK3PC"
-    };
+      <!-- VUE 1 : NOUVELLE RÉSERVATION & SUIVI DU JOUR -->
+      <div id="view-day" class="space-y-4">
+        <section
+          class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-3"
+        >
+          <h2
+            class="text-base font-black text-slate-800 flex items-center gap-2 border-b pb-2"
+          >
+            <span class="w-3 h-3 bg-blue-600 rounded-full inline-block"></span>
+            1. Saisir une réservation
+          </h2>
+          <form id="booking-form" class="space-y-3">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1"
+                  >⏰ Heure de début</label
+                >
+                <select
+                  id="form-slot"
+                  class="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-bold bg-slate-50 outline-none"
+                ></select>
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-600 mb-1"
+                  >⏱️ Durée</label
+                >
+                <select
+                  id="form-duration"
+                  class="w-full border-2 border-slate-200 rounded-xl p-3 text-sm font-bold bg-slate-50 outline-none"
+                ></select>
+              </div>
+            </div>
 
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const bookingsCol = collection(db, 'bookings');
-
-    const INVENTORY = {
-      windsurf: { name: "Windsurfer LT", max: 2, price: 30 },
-      kayak_double: { name: "Kayak Double", max: 2, price: 20 },
-      kayak_simple: { name: "Kayak Simple", max: 1, price: 15 },
-      paddle: { name: "Paddle", max: 5, price: 15 },
-      rescue: { name: "Rescue Board", max: 1, price: 15 },
-      longe_cote: { name: "Longe Côte (avec combi)", max: 20, price: 14 }
-    };
-
-    const SLOTS = [
-      "09:00 - 10:00", "09:30 - 10:30", "10:00 - 11:00", "10:30 - 11:30",
-      "11:00 - 12:00", "11:30 - 12:30", "12:00 - 13:00", "12:30 - 13:30",
-      "13:00 - 14:00", "13:30 - 14:30", "14:00 - 15:00", "14:30 - 15:30",
-      "15:00 - 16:00", "15:30 - 16:30", "16:00 - 17:00", "16:30 - 17:30",
-      "17:00 - 18:00", "17:30 - 18:30", "18:00 - 19:00"
-    ];
-
-    let bookings = [];
-    let previousPendingCount = -1;
-
-    const dateInput = document.getElementById('filter-date');
-    const formSlotSelect = document.getElementById('form-slot');
-    const editSlotSelect = document.getElementById('edit-slot');
-    const respSelect = document.getElementById('client-name-select');
-    const respCustom = document.getElementById('client-name-custom');
-    const formIsMemberCheck = document.getElementById('form-is-member');
-    const form = document.getElementById('booking-form');
-    const editForm = document.getElementById('edit-form');
-    const eqContainer = document.getElementById('equipment-selection');
-    const editEqContainer = document.getElementById('edit-equipment-selection');
-
-    const today = new Date();
-    dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-
-    SLOTS.forEach(slot => {
-      formSlotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
-      editSlotSelect.innerHTML += `<option value="${slot}">${slot}</option>`;
-    });
-
-    respSelect.addEventListener('change', (e) => {
-      if (e.target.value === '__NEW__') {
-        respCustom.classList.remove('hidden');
-        respCustom.required = true;
-        respCustom.focus();
-      } else {
-        respCustom.classList.add('hidden');
-        respCustom.required = false;
-      }
-    });
-
-    formSlotSelect.addEventListener('change', () => updateEquipmentSelectors());
-    formIsMemberCheck.addEventListener('change', () => updateEquipmentSelectors());
-
-    function playNotificationSound() {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15);
-        gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.4);
-      } catch(e) {}
-    }
-
-    onSnapshot(bookingsCol, (snapshot) => {
-      bookings = [];
-      snapshot.forEach(docSnap => { bookings.push({ id: docSnap.id, ...docSnap.data() }); });
-      const currentPendingCount = bookings.filter(b => b.status === 'EN_ATTENTE').length;
-      if (previousPendingCount !== -1 && currentPendingCount > previousPendingCount) {
-        playNotificationSound();
-      }
-      previousPendingCount = currentPendingCount;
-      renderAll();
-    });
-
-    function isLongeCoteAvailableForAdmin() {
-      if (!dateInput.value || !formSlotSelect.value) return false;
-      const [y, m, d] = dateInput.value.split('-').map(Number);
-      const chosenDate = new Date(y, m - 1, d);
-      const dayOfWeek = chosenDate.getDay(); 
-      const isAllowedDay = (dayOfWeek === 0 || dayOfWeek === 2 || dayOfWeek === 4);
-      const is10amSlot = formSlotSelect.value.startsWith("10:00");
-      return isAllowedDay && is10amSlot;
-    }
-
-    function generateCsvData(bookingList) {
-      let csvRows = [];
-      csvRows.push(["Date", "Créneau", "Client", "Adhérent", "Téléphone", "Prise en charge", "Matériels", "Pratiquants", "Urgence", "Statut Paiement", "Prix", "Statut Mer"].join(";"));
-
-      bookingList.forEach(b => {
-        let itemsArr = [];
-        if (b.items) {
-          Object.keys(b.items).forEach(k => {
-            if (b.items[k] > 0) itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`);
-          });
-        }
-        
-        let clientClean = (b.client || '').replace(/^Demande:\s*/i, '').replace(/\s*\(Adhérent\)$/i, '').replace(/;/g, ',');
-        let usersClean = (b.usersNames || '').replace(/;/g, ',');
-        let emergencyClean = (b.emergency || '').replace(/;/g, ',');
-        let itemsClean = itemsArr.join(' + ').replace(/;/g, ',');
-        let returnedText = b.returned ? 'Rentré' : 'En Mer / Non Rentré';
-
-        let row = [
-          `"${b.date || ''}"`, `"${b.slot || ''}"`, `"${clientClean}"`, `"${b.isMember ? 'Oui (-5€)' : 'Non'}"`,
-          `"${b.phone || ''}"`, `"${b.respNav || ''}"`, `"${itemsClean}"`, `"${usersClean}"`,
-          `"${emergencyClean}"`, `"${b.status || 'Non réglé'}"`, `"${b.totalPrice || 0} €"`, `"${returnedText}"`
-        ];
-        csvRows.push(row.join(";"));
-      });
-      return "\uFEFF" + csvRows.join("\n");
-    }
-
-    function downloadCsvFile(csvContent, fileName) {
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.setAttribute("href", url);
-      link.setAttribute("download", fileName);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    }
-
-    window.exportDailyCsv = function() {
-      const selectedDate = dateInput.value;
-      const dailyBookings = bookings.filter(b => b.date === selectedDate && b.status !== 'EN_ATTENTE');
-      if (dailyBookings.length === 0) { alert("Aucune réservation confirmée à exporter pour cette date."); return; }
-      downloadCsvFile(generateCsvData(dailyBookings), `Reservations_FSC_${selectedDate}.csv`);
-    };
-
-    window.exportAllCsv = function() {
-      const activeBookings = bookings.filter(b => b.status !== 'EN_ATTENTE');
-      if (activeBookings.length === 0) { alert("Le registre de réservations est totalement vide."); return; }
-      activeBookings.sort((a, b) => (a.date > b.date) ? 1 : -1);
-      downloadCsvFile(generateCsvData(activeBookings), `Registre_Complet_FSC_Compilation.csv`);
-    };
-
-    function hasSlotStarted(dateStr, slotStr) {
-      const now = new Date();
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const [startHour, startMin] = slotStr.split(' - ')[0].split(':').map(Number);
-      const slotStartTime = new Date(y, m - 1, d, startHour, startMin, 0, 0);
-      return now >= slotStartTime;
-    }
-
-    function isOverdue(dateStr, slotStr) {
-      const now = new Date();
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const [endHour, endMin] = slotStr.split(' - ')[1].split(':').map(Number);
-      const slotEndTime = new Date(y, m - 1, d, endHour, endMin + 15, 0, 0);
-      return now > slotEndTime;
-    }
-
-    function getAvailableStock(date, slot, itemKey, excludeBookingId = null) {
-      let used = 0;
-      bookings
-        .filter(b => b.date === date && b.slot === slot && b.status !== 'EN_ATTENTE' && b.id !== excludeBookingId)
-        .forEach(b => { if (b.items && b.items[itemKey]) used += b.items[itemKey]; });
-      return INVENTORY[itemKey].max - used;
-    }
-
-    window.changeQty = function(key, delta) {
-      const el = document.getElementById(`qty-val-${key}`);
-      const input = document.getElementById(`qty-${key}`);
-      let val = parseInt(input.value) + delta;
-      const max = parseInt(input.getAttribute('max'));
-      if (val < 0) val = 0;
-      if (val > max) val = max;
-      input.value = val;
-      el.innerText = val;
-    };
-
-    function updateEquipmentSelectors(selectedKeyToIncrement = null) {
-      const selectedDate = dateInput.value;
-      const selectedSlot = formSlotSelect.value;
-      const isMember = formIsMemberCheck.checked;
-      const longeAvailable = isLongeCoteAvailableForAdmin();
-
-      let currentValues = {};
-      Object.keys(INVENTORY).forEach(key => {
-        const inputEl = document.getElementById(`qty-${key}`);
-        if (inputEl) currentValues[key] = parseInt(inputEl.value) || 0;
-      });
-
-      eqContainer.innerHTML = '';
-      editEqContainer.innerHTML = '';
-
-      Object.keys(INVENTORY).forEach(key => {
-        if (key === 'longe_cote' && !longeAvailable) return;
-
-        const avail = getAvailableStock(selectedDate, selectedSlot, key);
-        const isTarget = (selectedKeyToIncrement === key && avail > 0);
-        let initVal = currentValues[key] || 0;
-        if (isTarget) initVal = 1;
-
-        if (initVal > avail) initVal = avail;
-        const itemPrice = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
-
-        eqContainer.innerHTML += `
-          <div class="flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200">
             <div>
-              <span class="font-bold text-slate-800 text-xs block">${INVENTORY[key].name}</span>
-              <span class="text-[10px] ${avail > 0 ? 'text-emerald-600 font-bold' : 'text-red-500 font-bold'}">
-                ${avail} dispo (${itemPrice}€/séance ${isMember ? '-5€ Adhérent' : ''})
+              <label class="block text-xs font-bold text-slate-600 mb-1"
+                >👤 Resp Nav / Prise en charge *</label
+              >
+              <select
+                id="client-name-select"
+                class="w-full border border-slate-300 rounded-xl p-3 text-sm font-bold bg-white focus:ring-2 focus:ring-blue-500 outline-none"
+              ></select>
+              <input
+                type="text"
+                id="client-name-custom"
+                placeholder="Saisir le nom du nouveau membre..."
+                class="w-full border border-blue-400 rounded-xl p-2.5 text-sm mt-1.5 hidden bg-blue-50 outline-none"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1"
+                >🏷️ Nom de la réservation *</label
+              >
+              <input
+                type="text"
+                id="client-name"
+                placeholder="ex: Mr Dupont"
+                class="w-full border border-slate-300 rounded-xl p-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                required
+              />
+            </div>
+
+            <!-- Case Adhérent FSC 2026 -->
+            <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-200">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="form-is-member"
+                  class="w-4 h-4 accent-blue-600 rounded"
+                />
+                <span class="text-xs font-black text-blue-900"
+                  >Adhérent FSC 2026 (-5 € / prestation)</span
+                >
+              </label>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1"
+                  >📞 Téléphone</label
+                >
+                <input
+                  type="tel"
+                  id="client-phone"
+                  placeholder="06 12 34 56 78"
+                  class="w-full border border-slate-300 rounded-xl p-2.5 text-xs outline-none"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-bold text-slate-500 mb-1"
+                  >👥 Participants</label
+                >
+                <input
+                  type="text"
+                  id="users-names"
+                  placeholder="ex: Marc (participe), Paul..."
+                  class="w-full border border-slate-300 rounded-xl p-2.5 text-xs outline-none"
+                />
+              </div>
+            </div>
+
+            <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
+              <label class="block text-[11px] font-bold text-amber-900 mb-1"
+                >🚨 Contact Urgence (Optionnel)</label
+              >
+              <input
+                type="text"
+                id="emergency-contact"
+                placeholder="Nom + N° Téléphone"
+                class="w-full border border-amber-300 rounded-lg p-2 text-xs bg-white outline-none"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1.5"
+                >🏄‍♂️ Choix du Matériel / Activité :</label
+              >
+              <div
+                id="equipment-selection"
+                class="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200"
+              ></div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-600 mb-1"
+                >💳 Règlement</label
+              >
+              <select
+                id="payment-status"
+                class="w-full border border-slate-300 rounded-xl p-3 text-xs font-bold bg-white"
+              >
+                <option value="Non réglé" selected>
+                  ⏳ Non réglé (Par défaut)
+                </option>
+                <option value="Réglé">✅ Réglé</option>
+              </select>
+            </div>
+
+            <button
+              type="submit"
+              class="w-full bg-blue-600 active:bg-blue-700 text-white font-black py-4 rounded-xl text-base shadow-lg uppercase tracking-wider"
+            >
+              ✅ Valider la réservation
+            </button>
+          </form>
+        </section>
+
+        <section id="bookings-section-day" class="space-y-3">
+          <h2
+            class="text-base font-black text-slate-800 flex items-center gap-2"
+          >
+            <span
+              class="w-3 h-3 bg-emerald-500 rounded-full inline-block"
+            ></span>
+            2. Suivi des Réservations Validées
+          </h2>
+          <div id="bookings-cards-day" class="space-y-2.5"></div>
+        </section>
+      </div>
+
+      <!-- VUE 2 : GRILLE DISPOS -->
+      <div id="view-grid" class="hidden space-y-4">
+        <section
+          class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-3"
+        >
+          <div class="flex justify-between items-center border-b pb-2">
+            <h2 class="text-base font-black text-slate-800">
+              Disponibilités par Créneau
+            </h2>
+            <span
+              class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-lg"
+              >Cliquer sur le vert pour réserver</span
+            >
+          </div>
+
+          <div
+            class="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-xl border border-slate-200 relative"
+          >
+            <table
+              class="w-full text-center text-xs border-separate border-spacing-0"
+            >
+              <thead>
+                <tr>
+                  <th
+                    class="sticky top-0 left-0 z-30 bg-slate-900 text-white p-2.5 text-left border-b border-r border-slate-700 font-bold text-[11px]"
+                  >
+                    Créneau
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-indigo-700 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]"
+                  >
+                    🎓 Cours WindSurf (1)
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]"
+                  >
+                    Windsurfer LT (2)
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]"
+                  >
+                    K. Double (2)
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]"
+                  >
+                    K. Simple (1)
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]"
+                  >
+                    Paddle (5)
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]"
+                  >
+                    Rescue (1)
+                  </th>
+                  <th
+                    class="sticky top-0 z-20 bg-slate-800 text-white p-2.5 border-b border-slate-700 font-bold text-[11px] min-w-[85px]"
+                  >
+                    Longe Côte (20)
+                  </th>
+                </tr>
+              </thead>
+              <tbody
+                id="grid-dispo-table"
+                class="divide-y divide-slate-200 font-medium"
+              ></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="space-y-3">
+          <h2 class="text-base font-black text-slate-800">
+            Réservations du Jour
+          </h2>
+          <div id="bookings-cards-grid" class="space-y-2.5"></div>
+        </section>
+      </div>
+
+      <!-- VUE 3 : VUE SEMAINE GLOBAL -->
+      <div
+        id="view-week"
+        class="hidden bg-white rounded-2xl p-4 shadow-sm border border-slate-200 space-y-4"
+      >
+        <h2 class="text-base font-black text-slate-800 border-b pb-2">
+          Planning de la Semaine
+        </h2>
+        <div id="week-container" class="space-y-3"></div>
+      </div>
+
+      <!-- VUE 4 : LONGE CÔTE -->
+      <div id="view-longe" class="hidden space-y-4">
+        <div id="longe-container" class="space-y-4"></div>
+      </div>
+    </div>
+
+    <!-- MODAL EDIT -->
+    <div
+      id="edit-modal"
+      onclick="handleModalBackdropClick(event)"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-3 fade-in"
+    >
+      <div
+        class="bg-white rounded-2xl max-w-lg w-full p-5 shadow-2xl max-h-[90vh] overflow-y-auto space-y-3 border-2 border-blue-500"
+      >
+        <div class="flex justify-between items-center border-b pb-2">
+          <h3 class="text-base font-bold text-slate-800">
+            ✏️ Modifier la Réservation
+          </h3>
+          <button
+            onclick="closeEditModal()"
+            class="text-xs font-bold text-slate-600 bg-slate-100 px-3 py-1.5 rounded-xl"
+          >
+            ❌ Fermer
+          </button>
+        </div>
+        <form id="edit-form" class="space-y-3">
+          <input type="hidden" id="edit-id" />
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 mb-1"
+                >Heure de début</label
+              >
+              <select
+                id="edit-slot"
+                class="w-full border rounded-xl p-2.5 text-xs font-bold bg-slate-50"
+              ></select>
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 mb-1"
+                >Durée</label
+              >
+              <select
+                id="edit-duration"
+                class="w-full border rounded-xl p-2.5 text-xs font-bold bg-slate-50"
+              ></select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1"
+              >Resp Nav / Prise en charge</label
+            >
+            <input
+              type="text"
+              id="edit-resp-name"
+              class="w-full border rounded-xl p-2.5 text-xs font-bold"
+              required
+            />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1"
+              >Nom de la réservation</label
+            >
+            <input
+              type="text"
+              id="edit-client-name"
+              class="w-full border rounded-xl p-2.5 text-xs font-bold"
+              required
+            />
+          </div>
+          <div class="bg-blue-50/80 p-2.5 rounded-xl border border-blue-200">
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                id="edit-is-member"
+                class="w-4 h-4 accent-blue-600 rounded"
+              />
+              <span class="text-xs font-bold text-blue-900"
+                >Adhérent FSC 2026 (-5 € / prestation)</span
+              >
+            </label>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1"
+              >Téléphone</label
+            >
+            <input
+              type="tel"
+              id="edit-client-phone"
+              class="w-full border rounded-xl p-2.5 text-xs"
+            />
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1"
+              >Participants</label
+            >
+            <input
+              type="text"
+              id="edit-users-names"
+              class="w-full border rounded-xl p-2.5 text-xs"
+            />
+          </div>
+          <input
+            type="text"
+            id="edit-emergency-contact"
+            placeholder="Contact Urgence"
+            class="w-full border border-amber-300 rounded-xl p-2.5 text-xs bg-amber-50"
+          />
+          <div>
+            <label class="block text-[10px] font-bold text-slate-500 mb-1"
+              >Quantités de matériel / séances</label
+            >
+            <div
+              id="edit-equipment-selection"
+              class="space-y-2 bg-slate-50 p-2.5 rounded-xl border"
+            ></div>
+          </div>
+          <select
+            id="edit-payment-status"
+            class="w-full border rounded-xl p-2.5 text-xs font-bold"
+          >
+            <option value="Non réglé">⏳ Non réglé</option>
+            <option value="Réglé">✅ Réglé</option>
+          </select>
+          <div class="flex gap-2 pt-2">
+            <button
+              type="button"
+              onclick="closeEditModal()"
+              class="w-1/2 bg-slate-200 text-slate-700 font-bold py-3 rounded-xl text-xs"
+            >
+              Annuler
+            </button>
+            <button
+              type="submit"
+              class="w-1/2 bg-blue-600 text-white font-bold py-3 rounded-xl text-xs shadow"
+            >
+              Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <script type="module">
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+      import {
+        getFirestore,
+        collection,
+        addDoc,
+        updateDoc,
+        deleteDoc,
+        doc,
+        onSnapshot,
+      } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+      const APP_PASSWORD = "FSC2026";
+
+      const authScreen = document.getElementById("auth-screen");
+      const appContent = document.getElementById("app-content");
+      const authForm = document.getElementById("auth-form");
+      const authError = document.getElementById("auth-error");
+
+      function checkAuth() {
+        if (localStorage.getItem("fsc_auth_token") === "GRANTED") {
+          authScreen.classList.add("hidden");
+          appContent.classList.remove("hidden");
+        } else {
+          authScreen.classList.remove("hidden");
+          appContent.classList.add("hidden");
+        }
+      }
+
+      authForm.addEventListener("submit", (e) => {
+        e.preventDefault();
+        const inputPass = document.getElementById("auth-password").value.trim();
+        if (inputPass === APP_PASSWORD) {
+          localStorage.setItem("fsc_auth_token", "GRANTED");
+          authError.classList.add("hidden");
+          checkAuth();
+        } else {
+          authError.classList.remove("hidden");
+        }
+      });
+
+      window.logout = function () {
+        localStorage.removeItem("fsc_auth_token");
+        checkAuth();
+      };
+
+      checkAuth();
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyB2c0RYApUY6wmrnJ2QJtqIVE1ZaIRJqPg",
+        authDomain: "fromentine-sailing-club.firebaseapp.com",
+        projectId: "fromentine-sailing-club",
+        storageBucket: "fromentine-sailing-club.firebasestorage.app",
+        messagingSenderId: "242231430746",
+        appId: "1:242231430746:web:920f676194198d024a5263",
+        measurementId: "G-NZ18JKK3PC",
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const db = getFirestore(app);
+      const bookingsCol = collection(db, "bookings");
+
+      const INVENTORY = {
+        cours_particulier: {
+          name: "Cours particulier Windsurfer LT (1h)",
+          max: 1,
+          price: 45,
+        },
+        windsurf: { name: "Windsurfer LT", max: 2, price: 30 },
+        kayak_double: { name: "Kayak Double", max: 2, price: 20 },
+        kayak_simple: { name: "Kayak Simple", max: 1, price: 15 },
+        paddle: { name: "Paddle", max: 5, price: 15 },
+        rescue: { name: "Rescue Board", max: 1, price: 15 },
+        longe_cote: { name: "Longe Côte (avec combi)", max: 20, price: 14 },
+      };
+
+      const SLOTS = [
+        "09:00 - 10:00",
+        "09:30 - 10:30",
+        "10:00 - 11:00",
+        "10:30 - 11:30",
+        "11:00 - 12:00",
+        "11:30 - 12:30",
+        "12:00 - 13:00",
+        "12:30 - 13:30",
+        "13:00 - 14:00",
+        "13:30 - 14:30",
+        "14:00 - 15:00",
+        "14:30 - 15:30",
+        "15:00 - 16:00",
+        "15:30 - 16:30",
+        "16:00 - 17:00",
+        "16:30 - 17:30",
+        "17:00 - 18:00",
+        "17:30 - 18:30",
+        "18:00 - 19:00",
+      ];
+
+      let bookings = [];
+      let previousPendingCount = -1;
+
+      const SLOTS_SET = new Set(SLOTS);
+      // Heures de début possibles (dérivées des créneaux d'1 h) : 09:00 → 18:00.
+      const START_TIMES = SLOTS.map((s) => s.split(" - ")[0]);
+
+      // --- Helpers créneaux multi-heures ---------------------------------
+      function timeToMin(hhmm) {
+        const [h, m] = hhmm.split(":").map(Number);
+        return h * 60 + m;
+      }
+      function minToTime(min) {
+        return `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+      }
+      // Accepte une heure de début ("HH:MM") ou un ancien créneau
+      // ("HH:MM - HH:MM") et renvoie les minutes de début.
+      function parseStartMin(startValue) {
+        const start = startValue.includes(" - ")
+          ? startValue.split(" - ")[0]
+          : startValue;
+        return timeToMin(start);
+      }
+      // Créneau d'1 h ("HH:MM - HH:MM") démarrant à `startMin`.
+      function baseSlotFromStartMin(startMin) {
+        return `${minToTime(startMin)} - ${minToTime(startMin + 60)}`;
+      }
+      // Liste des créneaux d'1 h couverts par un début + une durée (en heures).
+      function getCoveredSlots(startValue, duration) {
+        const startMin = parseStartMin(startValue);
+        const arr = [];
+        for (let i = 0; i < duration; i++)
+          arr.push(baseSlotFromStartMin(startMin + i * 60));
+        return arr;
+      }
+      // Durée maximale (en heures) réservable à partir d'une heure de début,
+      // sans sortir de la plage horaire d'ouverture.
+      function getMaxDuration(startValue) {
+        if (!startValue) return 1;
+        const startMin = parseStartMin(startValue);
+        let d = 0;
+        while (SLOTS_SET.has(baseSlotFromStartMin(startMin + d * 60))) d++;
+        return d || 1;
+      }
+      // Libellé d'affichage ("10:00 - 12:00") pour un début + une durée.
+      function getDisplaySlot(startValue, duration) {
+        const startMin = parseStartMin(startValue);
+        return `${minToTime(startMin)} - ${minToTime(startMin + duration * 60)}`;
+      }
+
+      const dateInput = document.getElementById("filter-date");
+      const formSlotSelect = document.getElementById("form-slot");
+      const formDurationSelect = document.getElementById("form-duration");
+      const editSlotSelect = document.getElementById("edit-slot");
+      const editDurationSelect = document.getElementById("edit-duration");
+      const respSelect = document.getElementById("client-name-select");
+      const respCustom = document.getElementById("client-name-custom");
+      const formIsMemberCheck = document.getElementById("form-is-member");
+      const form = document.getElementById("booking-form");
+      const editForm = document.getElementById("edit-form");
+      const eqContainer = document.getElementById("equipment-selection");
+      const editEqContainer = document.getElementById(
+        "edit-equipment-selection",
+      );
+
+      const today = new Date();
+      dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+      // L'édition d'une réservation existante garde toutes les heures de début.
+      START_TIMES.forEach((t) => {
+        editSlotSelect.innerHTML += `<option value="${t}">${t}</option>`;
+      });
+
+      // Renseigne le sélecteur d'heure de début du formulaire de saisie en
+      // ne proposant, pour la journée en cours, que les heures à venir.
+      function populateSlotOptions() {
+        const previousValue = formSlotSelect.value;
+        const selectedDate = dateInput.value;
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        const isToday = selectedDate === todayStr;
+
+        formSlotSelect.innerHTML = "";
+        let optionsHtml = "";
+        START_TIMES.forEach((t) => {
+          if (isToday) {
+            const [startHour, startMin] = t.split(":").map(Number);
+            const startTime = new Date(
+              now.getFullYear(),
+              now.getMonth(),
+              now.getDate(),
+              startHour,
+              startMin,
+              0,
+              0,
+            );
+            // On ne propose que les heures à venir (non encore passées) :
+            // la prochaine heure devient l'option proposée par défaut.
+            if (now >= startTime) return;
+          }
+          optionsHtml += `<option value="${t}">${t}</option>`;
+        });
+
+        if (optionsHtml === "") {
+          formSlotSelect.innerHTML = `<option value="" disabled selected>Aucune heure restante aujourd'hui</option>`;
+          populateDurationOptions();
+          return;
+        }
+
+        formSlotSelect.innerHTML = optionsHtml;
+        // Restaure la sélection précédente si elle est encore proposée.
+        if (
+          previousValue &&
+          [...formSlotSelect.options].some((o) => o.value === previousValue)
+        ) {
+          formSlotSelect.value = previousValue;
+        }
+        populateDurationOptions();
+      }
+
+      // Renseigne le sélecteur de durée d'un formulaire en fonction du créneau
+      // de début choisi (nombre d'heures réservables sans dépasser la journée).
+      function fillDurationSelect(durationSelect, startSlot) {
+        const previous = parseInt(durationSelect.value) || 1;
+        const maxD = getMaxDuration(startSlot);
+        let html = "";
+        for (let d = 1; d <= maxD; d++)
+          html += `<option value="${d}">${d} heure${d > 1 ? "s" : ""}</option>`;
+        durationSelect.innerHTML = html;
+        durationSelect.value = String(
+          previous >= 1 && previous <= maxD ? previous : 1,
+        );
+      }
+      function populateDurationOptions() {
+        fillDurationSelect(formDurationSelect, formSlotSelect.value);
+      }
+      function populateEditDurationOptions() {
+        fillDurationSelect(editDurationSelect, editSlotSelect.value);
+      }
+
+      populateSlotOptions();
+
+      respSelect.addEventListener("change", (e) => {
+        if (e.target.value === "__NEW__") {
+          respCustom.classList.remove("hidden");
+          respCustom.required = true;
+          respCustom.focus();
+        } else {
+          respCustom.classList.add("hidden");
+          respCustom.required = false;
+        }
+      });
+
+      formSlotSelect.addEventListener("change", () => {
+        populateDurationOptions();
+        updateEquipmentSelectors();
+      });
+      formDurationSelect.addEventListener("change", () =>
+        updateEquipmentSelectors(),
+      );
+      editSlotSelect.addEventListener("change", populateEditDurationOptions);
+      formIsMemberCheck.addEventListener("change", () =>
+        updateEquipmentSelectors(),
+      );
+
+      function playNotificationSound() {
+        try {
+          const audioCtx = new (
+            window.AudioContext || window.webkitAudioContext
+          )();
+          const osc = audioCtx.createOscillator();
+          const gain = audioCtx.createGain();
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(587.33, audioCtx.currentTime);
+          osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioCtx.currentTime + 0.4,
+          );
+          osc.connect(gain);
+          gain.connect(audioCtx.destination);
+          osc.start();
+          osc.stop(audioCtx.currentTime + 0.4);
+        } catch (e) {}
+      }
+
+      onSnapshot(bookingsCol, (snapshot) => {
+        bookings = [];
+        snapshot.forEach((docSnap) => {
+          bookings.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        const currentPendingCount = bookings.filter(
+          (b) => b.status === "EN_ATTENTE",
+        ).length;
+        if (
+          previousPendingCount !== -1 &&
+          currentPendingCount > previousPendingCount
+        ) {
+          playNotificationSound();
+        }
+        previousPendingCount = currentPendingCount;
+        renderAll();
+      });
+
+      function isLongeCoteAvailableForAdmin() {
+        if (!dateInput.value || !formSlotSelect.value) return false;
+        const [y, m, d] = dateInput.value.split("-").map(Number);
+        const chosenDate = new Date(y, m - 1, d);
+        const dayOfWeek = chosenDate.getDay();
+        const isAllowedDay =
+          dayOfWeek === 0 || dayOfWeek === 2 || dayOfWeek === 4;
+        const is10amSlot = formSlotSelect.value.startsWith("10:00");
+        return isAllowedDay && is10amSlot;
+      }
+
+      function generateCsvData(bookingList) {
+        let csvRows = [];
+        csvRows.push(
+          [
+            "Date",
+            "Créneau",
+            "Client",
+            "Adhérent",
+            "Téléphone",
+            "Prise en charge",
+            "Matériels",
+            "Pratiquants",
+            "Urgence",
+            "Statut Paiement",
+            "Prix",
+            "Statut Mer",
+          ].join(";"),
+        );
+
+        bookingList.forEach((b) => {
+          let itemsArr = [];
+          if (b.items) {
+            Object.keys(b.items).forEach((k) => {
+              if (b.items[k] > 0)
+                itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`);
+            });
+          }
+
+          let clientClean = (b.client || "")
+            .replace(/^Demande:\s*/i, "")
+            .replace(/\s*\(Adhérent\)$/i, "")
+            .replace(/;/g, ",");
+          let usersClean = (b.usersNames || "").replace(/;/g, ",");
+          let emergencyClean = (b.emergency || "").replace(/;/g, ",");
+          let itemsClean = itemsArr.join(" + ").replace(/;/g, ",");
+          let returnedText = b.returned ? "Rentré" : "En Mer / Non Rentré";
+
+          let row = [
+            `"${b.date || ""}"`,
+            `"${b.slot || ""}"`,
+            `"${clientClean}"`,
+            `"${b.isMember ? "Oui (-5€)" : "Non"}"`,
+            `"${b.phone || ""}"`,
+            `"${b.respNav || ""}"`,
+            `"${itemsClean}"`,
+            `"${usersClean}"`,
+            `"${emergencyClean}"`,
+            `"${b.status || "Non réglé"}"`,
+            `"${b.totalPrice || 0} €"`,
+            `"${returnedText}"`,
+          ];
+          csvRows.push(row.join(";"));
+        });
+        return "\uFEFF" + csvRows.join("\n");
+      }
+
+      function downloadCsvFile(csvContent, fileName) {
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      window.exportDailyCsv = function () {
+        const selectedDate = dateInput.value;
+        const dailyBookings = bookings.filter(
+          (b) => b.date === selectedDate && b.status !== "EN_ATTENTE",
+        );
+        if (dailyBookings.length === 0) {
+          alert("Aucune réservation confirmée à exporter pour cette date.");
+          return;
+        }
+        downloadCsvFile(
+          generateCsvData(dailyBookings),
+          `Reservations_FSC_${selectedDate}.csv`,
+        );
+      };
+
+      window.exportAllCsv = function () {
+        const activeBookings = bookings.filter(
+          (b) => b.status !== "EN_ATTENTE",
+        );
+        if (activeBookings.length === 0) {
+          alert("Le registre de réservations est totalement vide.");
+          return;
+        }
+        activeBookings.sort((a, b) => (a.date > b.date ? 1 : -1));
+        downloadCsvFile(
+          generateCsvData(activeBookings),
+          `Registre_Complet_FSC_Compilation.csv`,
+        );
+      };
+
+      function hasSlotStarted(dateStr, slotStr) {
+        const now = new Date();
+        const [y, m, d] = dateStr.split("-").map(Number);
+        const [startHour, startMin] = slotStr
+          .split(" - ")[0]
+          .split(":")
+          .map(Number);
+        const slotStartTime = new Date(y, m - 1, d, startHour, startMin, 0, 0);
+        return now >= slotStartTime;
+      }
+
+      function isOverdue(dateStr, slotStr) {
+        const now = new Date();
+        const [y, m, d] = dateStr.split("-").map(Number);
+        const [endHour, endMin] = slotStr
+          .split(" - ")[1]
+          .split(":")
+          .map(Number);
+        const slotEndTime = new Date(y, m - 1, d, endHour, endMin + 15, 0, 0);
+        return now > slotEndTime;
+      }
+
+      function getAvailableStock(date, slot, itemKey, excludeBookingId = null) {
+        let used = 0;
+        bookings
+          .filter(
+            (b) =>
+              b.date === date &&
+              b.status !== "EN_ATTENTE" &&
+              b.id !== excludeBookingId,
+          )
+          .forEach((b) => {
+            if (!b.items || !b.items[itemKey]) return;
+            // Une réservation multi-heures occupe plusieurs créneaux d'1 h
+            // (b.slots) ; les anciennes réservations n'ont qu'un `slot`.
+            const bSlots = b.slots || [b.slot];
+            // Le cours particulier ne dure qu'1 h : il n'occupe que sa 1re heure.
+            const occupies =
+              itemKey === "cours_particulier"
+                ? bSlots[0] === slot
+                : bSlots.includes(slot);
+            if (occupies) used += b.items[itemKey];
+          });
+        return INVENTORY[itemKey].max - used;
+      }
+
+      // Stock disponible sur TOUTE une plage (min des créneaux couverts) : un
+      // matériel doit être libre sur chaque heure pour être réservable.
+      function getAvailableStockForSlots(
+        date,
+        coveredSlots,
+        itemKey,
+        excludeBookingId = null,
+      ) {
+        if (!coveredSlots || coveredSlots.length === 0)
+          return INVENTORY[itemKey].max;
+        return Math.min(
+          ...coveredSlots.map((s) =>
+            getAvailableStock(date, s, itemKey, excludeBookingId),
+          ),
+        );
+      }
+
+      // Disponibilité d'un article pour une réservation début + durée. Le cours
+      // particulier n'étant réservé que sur 1 h, on ne teste que la 1re heure.
+      function getItemAvailability(
+        date,
+        coveredSlots,
+        itemKey,
+        excludeBookingId = null,
+      ) {
+        if (!coveredSlots || coveredSlots.length === 0)
+          return INVENTORY[itemKey].max;
+        const slotsToCheck =
+          itemKey === "cours_particulier" ? [coveredSlots[0]] : coveredSlots;
+        return getAvailableStockForSlots(
+          date,
+          slotsToCheck,
+          itemKey,
+          excludeBookingId,
+        );
+      }
+
+      window.changeQty = function (key, delta) {
+        const el = document.getElementById(`qty-val-${key}`);
+        const input = document.getElementById(`qty-${key}`);
+        let val = parseInt(input.value) + delta;
+        const max = parseInt(input.getAttribute("max"));
+        if (val < 0) val = 0;
+        if (val > max) val = max;
+        input.value = val;
+        el.innerText = val;
+      };
+
+      function updateEquipmentSelectors(selectedKeyToIncrement = null) {
+        const selectedDate = dateInput.value;
+        const selectedSlot = formSlotSelect.value;
+        const duration = parseInt(formDurationSelect.value) || 1;
+        const coveredSlots = selectedSlot
+          ? getCoveredSlots(selectedSlot, duration)
+          : [];
+        const isMember = formIsMemberCheck.checked;
+        const longeAvailable = isLongeCoteAvailableForAdmin();
+
+        let currentValues = {};
+        Object.keys(INVENTORY).forEach((key) => {
+          const inputEl = document.getElementById(`qty-${key}`);
+          if (inputEl) currentValues[key] = parseInt(inputEl.value) || 0;
+        });
+
+        eqContainer.innerHTML = "";
+        editEqContainer.innerHTML = "";
+
+        Object.keys(INVENTORY).forEach((key) => {
+          if (key === "longe_cote" && !longeAvailable) return;
+
+          const avail = getItemAvailability(selectedDate, coveredSlots, key);
+          const isTarget = selectedKeyToIncrement === key && avail > 0;
+          let initVal = currentValues[key] || 0;
+          if (isTarget) initVal = 1;
+
+          if (initVal > avail) initVal = avail;
+          const itemPrice = isMember
+            ? Math.max(0, INVENTORY[key].price - 5)
+            : INVENTORY[key].price;
+
+          // Le cours particulier (prestation encadrée) est mis en avant avec
+          // une couleur, une icône et un badge distincts du matériel en libre-service.
+          const isCours = key === "cours_particulier";
+          const cardClass = isCours
+            ? "flex justify-between items-center bg-indigo-50 p-2.5 rounded-xl border-2 border-indigo-400 shadow-sm"
+            : "flex justify-between items-center bg-white p-2.5 rounded-xl border border-slate-200";
+          const nameHtml = isCours
+            ? `🎓 ${INVENTORY[key].name} <span class="align-middle ml-1 text-[8px] font-black bg-indigo-600 text-white px-1.5 py-0.5 rounded-full uppercase tracking-wider">Moniteur</span>`
+            : INVENTORY[key].name;
+          const nameColor = isCours ? "text-indigo-900" : "text-slate-800";
+          const plusBtnClass = isCours
+            ? "bg-indigo-200 text-indigo-800"
+            : "bg-blue-100 text-blue-800";
+          const qtyColor = isCours ? "text-indigo-900" : "text-blue-900";
+
+          eqContainer.innerHTML += `
+          <div class="${cardClass}">
+            <div>
+              <span class="font-bold ${nameColor} text-xs block">${nameHtml}</span>
+              <span class="text-[10px] ${avail > 0 ? "text-emerald-600 font-bold" : "text-red-500 font-bold"}">
+                ${avail} dispo (${itemPrice}€/séance ${isMember ? "-5€ Adhérent" : ""})
               </span>
             </div>
             <input type="hidden" id="qty-${key}" value="${initVal}" max="${avail}">
             <div class="flex items-center gap-2">
               <button type="button" onclick="changeQty('${key}', -1)" class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 font-black flex items-center justify-center">−</button>
-              <span id="qty-val-${key}" class="w-5 text-center font-black text-sm text-blue-900">${initVal}</span>
-              <button type="button" onclick="changeQty('${key}', 1)" class="w-8 h-8 rounded-lg bg-blue-100 text-blue-800 font-black flex items-center justify-center" ${avail === 0 ? 'disabled' : ''}>+</button>
+              <span id="qty-val-${key}" class="w-5 text-center font-black text-sm ${qtyColor}">${initVal}</span>
+              <button type="button" onclick="changeQty('${key}', 1)" class="w-8 h-8 rounded-lg ${plusBtnClass} font-black flex items-center justify-center" ${avail === 0 ? "disabled" : ""}>+</button>
             </div>
           </div>
         `;
 
-        let editOptionsHtml = '';
-        for (let i = 0; i <= INVENTORY[key].max; i++) editOptionsHtml += `<option value="${i}">${i}</option>`;
-        editEqContainer.innerHTML += `
+          let editOptionsHtml = "";
+          for (let i = 0; i <= INVENTORY[key].max; i++)
+            editOptionsHtml += `<option value="${i}">${i}</option>`;
+          editEqContainer.innerHTML += `
           <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border">
             <span class="font-bold text-slate-800">${INVENTORY[key].name}</span>
             <select id="edit-qty-${key}" class="border rounded-lg px-3 py-1 font-bold text-xs bg-slate-50">${editOptionsHtml}</select>
           </div>
         `;
-      });
-    }
-
-    function updateRespSelectOptions() {
-      const counts = {};
-      bookings.forEach(b => {
-        if (b.respNav && b.respNav !== 'En attente validation') counts[b.respNav] = (counts[b.respNav] || 0) + 1;
-      });
-
-      const sortedResps = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
-      respSelect.innerHTML = `<option value="" disabled selected>-- Choisir le Resp Nav / Équipe --</option><option value="__NEW__" class="font-bold text-blue-600">➕ Ajouter un nouveau membre...</option>`;
-
-      if (sortedResps.length > 0) {
-        respSelect.innerHTML += `<option disabled>────────── Membres fréquents ──────────</option>`;
-        sortedResps.forEach(name => { respSelect.innerHTML += `<option value="${name}">${name} (${counts[name]} résa)</option>`; });
-      }
-    }
-
-    window.showDailySummary = function() {
-      const selectedDate = dateInput.value;
-      const dayBookings = bookings.filter(b => b.date === selectedDate && b.status !== 'EN_ATTENTE');
-      
-      let total = 0; let totalPaid = 0; let totalUnpaid = 0; let summaryByEq = {};
-      Object.keys(INVENTORY).forEach(k => summaryByEq[k] = 0);
-
-      dayBookings.forEach(b => {
-        total += b.totalPrice;
-        if (b.status === 'Réglé') totalPaid += b.totalPrice; else totalUnpaid += b.totalPrice;
-        if (b.items) { Object.keys(b.items).forEach(k => { if (b.items[k] > 0) summaryByEq[k] += b.items[k]; }); }
-      });
-
-      let eqDetails = Object.keys(INVENTORY).map(k => `- ${INVENTORY[k].name} : ${summaryByEq[k]} loué(s)/réservé(s)`).join('\n');
-      alert(`📊 RÉCAPITULATIF CAISSE DU ${selectedDate}\n\n💰 Recettes Totales : ${total} €\n✅ Réglé (En caisse) : ${totalPaid} €\n⏳ Non réglé : ${totalUnpaid} €\n\n🏄‍♂️ MATÉRIELS & ACTIVITÉS :\n${eqDetails}`);
-    };
-
-    window.switchView = function(view) {
-      ['day', 'requests', 'grid', 'week'].forEach(v => {
-        document.getElementById(`view-${v}`).classList.add('hidden');
-        document.getElementById(`tab-${v}-btn`).className = "py-3 px-1 rounded-xl text-slate-600";
-      });
-
-      document.getElementById(`view-${view}`).classList.remove('hidden');
-      const btn = document.getElementById(`tab-${view}-btn`);
-      btn.className = `py-3 px-1 rounded-xl font-bold shadow-sm ${view === 'requests' ? 'bg-amber-500 text-slate-900 font-black' : 'bg-blue-600 text-white'}`;
-      
-      if (view === 'requests') renderPendingRequests();
-      else if (view === 'grid') renderGrid();
-      else if (view === 'week') renderWeek();
-    };
-
-    window.scrollToBookings = function() {
-      switchView('day');
-      document.getElementById('bookings-section-day').scrollIntoView({ behavior: 'smooth' });
-    };
-
-    window.toggleOnWaterPanel = function() { document.getElementById('on-water-panel').classList.toggle('hidden'); };
-
-    window.startBookingFromGrid = function(slot, itemKey) {
-      formSlotSelect.value = slot;
-      updateEquipmentSelectors(itemKey);
-      switchView('day');
-      document.getElementById('client-name').focus();
-    };
-
-    function renderPendingRequests() {
-      const list = document.getElementById('pending-requests-list');
-      const pending = bookings.filter(b => b.status === 'EN_ATTENTE');
-
-      if (pending.length === 0) {
-        list.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs italic">Aucune nouvelle demande client en attente.</div>`;
-        return;
+        });
       }
 
-      list.innerHTML = '';
-      pending.forEach(b => {
-        let itemsArr = [];
-        let stockOk = true;
+      function updateRespSelectOptions() {
+        // Mémorise la sélection courante : la reconstruction du <select>
+        // ci-dessous (déclenchée à chaque rafraîchissement Firestore ou toutes
+        // les 30 s) effaçait sinon le choix de l'utilisateur, l'obligeant à
+        // re-sélectionner le responsable une seconde fois avant de valider.
+        const previousValue = respSelect.value;
 
-        if (b.items) {
-          Object.keys(b.items).forEach(k => {
-            if (b.items[k] > 0) {
-              const avail = getAvailableStock(b.date, b.slot, k);
-              itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`);
-              if (b.items[k] > avail) stockOk = false;
-            }
+        const counts = {};
+        bookings.forEach((b) => {
+          if (b.respNav && b.respNav !== "En attente validation")
+            counts[b.respNav] = (counts[b.respNav] || 0) + 1;
+        });
+
+        const sortedResps = Object.keys(counts).sort(
+          (a, b) => counts[b] - counts[a],
+        );
+        respSelect.innerHTML = `<option value="" disabled selected>-- Choisir le Resp Nav / Équipe --</option><option value="__NEW__" class="font-bold text-blue-600">➕ Ajouter un nouveau membre...</option>`;
+
+        if (sortedResps.length > 0) {
+          respSelect.innerHTML += `<option disabled>────────── Membres fréquents ──────────</option>`;
+          sortedResps.forEach((name) => {
+            respSelect.innerHTML += `<option value="${name}">${name} (${counts[name]} résa)</option>`;
           });
         }
 
-        list.innerHTML += `
+        // Restaure la sélection précédente si elle existe toujours.
+        if (
+          previousValue &&
+          [...respSelect.options].some((o) => o.value === previousValue)
+        ) {
+          respSelect.value = previousValue;
+        }
+      }
+
+      window.showDailySummary = function () {
+        const selectedDate = dateInput.value;
+        const dayBookings = bookings.filter(
+          (b) => b.date === selectedDate && b.status !== "EN_ATTENTE",
+        );
+
+        let total = 0;
+        let totalPaid = 0;
+        let totalUnpaid = 0;
+        let summaryByEq = {};
+        Object.keys(INVENTORY).forEach((k) => (summaryByEq[k] = 0));
+
+        dayBookings.forEach((b) => {
+          total += b.totalPrice;
+          if (b.status === "Réglé") totalPaid += b.totalPrice;
+          else totalUnpaid += b.totalPrice;
+          if (b.items) {
+            Object.keys(b.items).forEach((k) => {
+              if (b.items[k] > 0) summaryByEq[k] += b.items[k];
+            });
+          }
+        });
+
+        let eqDetails = Object.keys(INVENTORY)
+          .map(
+            (k) =>
+              `- ${INVENTORY[k].name} : ${summaryByEq[k]} loué(s)/réservé(s)`,
+          )
+          .join("\n");
+        alert(
+          `📊 RÉCAPITULATIF CAISSE DU ${selectedDate}\n\n💰 Recettes Totales : ${total} €\n✅ Réglé (En caisse) : ${totalPaid} €\n⏳ Non réglé : ${totalUnpaid} €\n\n🏄‍♂️ MATÉRIELS & ACTIVITÉS :\n${eqDetails}`,
+        );
+      };
+
+      window.switchView = function (view) {
+        ["day", "requests", "grid", "longe", "week"].forEach((v) => {
+          document.getElementById(`view-${v}`).classList.add("hidden");
+          document.getElementById(`tab-${v}-btn`).className =
+            "py-3 px-1 rounded-xl text-slate-600";
+        });
+
+        document.getElementById(`view-${view}`).classList.remove("hidden");
+        const btn = document.getElementById(`tab-${view}-btn`);
+        btn.className = `py-3 px-1 rounded-xl font-bold shadow-sm ${view === "requests" ? "bg-amber-500 text-slate-900 font-black" : view === "longe" ? "bg-cyan-700 text-white" : "bg-blue-600 text-white"}`;
+
+        if (view === "requests") renderPendingRequests();
+        else if (view === "grid") renderGrid();
+        else if (view === "longe") renderLonge();
+        else if (view === "week") renderWeek();
+      };
+
+      window.scrollToBookings = function () {
+        switchView("day");
+        document
+          .getElementById("bookings-section-day")
+          .scrollIntoView({ behavior: "smooth" });
+      };
+
+      window.toggleOnWaterPanel = function () {
+        document.getElementById("on-water-panel").classList.toggle("hidden");
+      };
+
+      window.startBookingFromGrid = function (slot, itemKey) {
+        // La grille fournit un créneau d'1 h ; on ne garde que l'heure de début.
+        formSlotSelect.value = slot.split(" - ")[0];
+        populateDurationOptions();
+        updateEquipmentSelectors(itemKey);
+        switchView("day");
+        document.getElementById("client-name").focus();
+      };
+
+      function renderPendingRequests() {
+        const list = document.getElementById("pending-requests-list");
+        const pending = bookings.filter((b) => b.status === "EN_ATTENTE");
+
+        if (pending.length === 0) {
+          list.innerHTML = `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs italic">Aucune nouvelle demande client en attente.</div>`;
+          return;
+        }
+
+        list.innerHTML = "";
+        pending.forEach((b) => {
+          let itemsArr = [];
+          let stockOk = true;
+
+          if (b.items) {
+            const bSlots = b.slots || [b.slot];
+            Object.keys(b.items).forEach((k) => {
+              if (b.items[k] > 0) {
+                const avail = getItemAvailability(b.date, bSlots, k);
+                itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`);
+                if (b.items[k] > avail) stockOk = false;
+              }
+            });
+          }
+
+          list.innerHTML += `
           <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-4 space-y-2.5 shadow-sm">
             <div class="flex justify-between items-start">
               <div>
@@ -659,155 +1379,207 @@
               </div>
               <div class="text-right">
                 <span class="text-base font-black text-slate-800 block">${b.totalPrice} €</span>
-                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${stockOk ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' : 'bg-red-100 text-red-800 border border-red-300'}">
-                  ${stockOk ? '✅ Stock dispo' : '⚠️ Stock insuffisant'}
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${stockOk ? "bg-emerald-100 text-emerald-800 border border-emerald-300" : "bg-red-100 text-red-800 border border-red-300"}">
+                  ${stockOk ? "✅ Stock dispo" : "⚠️ Stock insuffisant"}
                 </span>
               </div>
             </div>
             <div class="bg-white p-2.5 rounded-xl text-xs space-y-1 border border-amber-200">
-              <div class="font-bold text-slate-800">🏄‍♂️ ${itemsArr.join(', ')}</div>
+              <div class="font-bold text-slate-800">🏄‍♂️ ${itemsArr.join(", ")}</div>
               <div class="text-slate-600">${b.usersNames}</div>
               <div class="text-red-600 font-bold text-[10px]">🚨 Contact Urgence: ${b.emergency}</div>
             </div>
             <div class="flex gap-2 pt-1">
-              <button onclick="approveRequest('${b.id}')" class="flex-1 ${stockOk ? 'bg-emerald-600 active:bg-emerald-700 text-white' : 'bg-slate-300 text-slate-500 cursor-not-allowed'} font-black text-xs py-3 rounded-xl shadow">
-                ${stockOk ? '✅ Valider & Bloquer Stock' : '🚫 Stock Insuffisant'}
+              <button onclick="approveRequest('${b.id}')" class="flex-1 ${stockOk ? "bg-emerald-600 active:bg-emerald-700 text-white" : "bg-slate-300 text-slate-500 cursor-not-allowed"} font-black text-xs py-3 rounded-xl shadow">
+                ${stockOk ? "✅ Valider & Bloquer Stock" : "🚫 Stock Insuffisant"}
               </button>
               <button onclick="rejectRequest('${b.id}')" class="bg-red-100 text-red-700 active:bg-red-200 font-bold text-xs px-4 py-3 rounded-xl border border-red-300">❌ Refuser</button>
             </div>
           </div>
         `;
-      });
-    }
-
-    window.sendSmsConfirmation = function(phone, clientName, dateStr, slotStr, itemsObj) {
-      let rawName = clientName.replace(/^Demande:\s*/i, '').replace(/\s*\(Adhérent\)$/i, '').trim();
-      let parts = rawName.split(' ');
-      let firstName = parts.length > 1 ? parts[parts.length - 1] : parts[0];
-      firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
-
-      let formattedDate = dateStr;
-      try {
-        const [y, m, d] = dateStr.split('-');
-        const dateObj = new Date(y, parseInt(m) - 1, d);
-        formattedDate = dateObj.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
-      } catch (e) {}
-
-      let formattedSlot = slotStr;
-      if (slotStr.includes(' - ')) {
-        const [start, end] = slotStr.split(' - ');
-        formattedSlot = `de ${start} à ${end}`;
+        });
       }
 
-      let itemsArr = [];
-      if (itemsObj) {
-        Object.keys(itemsObj).forEach(k => {
-          const qty = itemsObj[k];
-          if (qty > 0) {
-            let itemName = INVENTORY[k].name;
-            if (qty > 1) {
-              if (itemName.endsWith('LT')) itemName += 's';
-              else if (!itemName.endsWith('s')) itemName += 's';
+      window.sendSmsConfirmation = function (
+        phone,
+        clientName,
+        dateStr,
+        slotStr,
+        itemsObj,
+      ) {
+        let rawName = clientName
+          .replace(/^Demande:\s*/i, "")
+          .replace(/\s*\(Adhérent\)$/i, "")
+          .trim();
+        let parts = rawName.split(" ");
+        let firstName = parts.length > 1 ? parts[parts.length - 1] : parts[0];
+        firstName =
+          firstName.charAt(0).toUpperCase() + firstName.slice(1).toLowerCase();
+
+        let formattedDate = dateStr;
+        try {
+          const [y, m, d] = dateStr.split("-");
+          const dateObj = new Date(y, parseInt(m) - 1, d);
+          formattedDate = dateObj.toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          });
+        } catch (e) {}
+
+        let formattedSlot = slotStr;
+        if (slotStr.includes(" - ")) {
+          const [start, end] = slotStr.split(" - ");
+          formattedSlot = `de ${start} à ${end}`;
+        }
+
+        let itemsArr = [];
+        if (itemsObj) {
+          Object.keys(itemsObj).forEach((k) => {
+            const qty = itemsObj[k];
+            if (qty > 0) {
+              let itemName = INVENTORY[k].name;
+              if (qty > 1) {
+                if (itemName.endsWith("LT")) itemName += "s";
+                else if (!itemName.endsWith("s")) itemName += "s";
+              }
+              itemsArr.push(`${qty} ${itemName}`);
             }
-            itemsArr.push(`${qty} ${itemName}`);
-          }
+          });
+        }
+        const itemsText =
+          itemsArr.length > 0 ? itemsArr.join(", ") : "votre prestation";
+
+        const message = `Bonjour ${firstName}, votre réservation au Fromentine Sailing Club pour ${itemsText} le ${formattedDate} ${formattedSlot} est confirmée ! On se retrouve à la cabane du club sur la plage. Le règlement se fera directement sur place (CB ou espèces). À très vite !`;
+
+        const cleanPhone = phone.replace(/\s+/g, "");
+        window.open(
+          `sms:${cleanPhone}?body=${encodeURIComponent(message)}`,
+          "_self",
+        );
+      };
+
+      window.approveRequest = async function (id) {
+        const b = bookings.find((item) => item.id === id);
+        if (!b) return;
+
+        let missingItems = [];
+        if (b.items) {
+          const bSlots = b.slots || [b.slot];
+          Object.keys(b.items).forEach((k) => {
+            if (b.items[k] > 0) {
+              const avail = getItemAvailability(b.date, bSlots, k);
+              if (b.items[k] > avail)
+                missingItems.push(
+                  `${INVENTORY[k].name} (Demandé: ${b.items[k]}, Dispo: ${avail})`,
+                );
+            }
+          });
+        }
+
+        if (missingItems.length > 0) {
+          alert(
+            `❌ IMPOSSIBLE DE VALIDER :\nStock insuffisant pour ce créneau :\n- ` +
+              missingItems.join("\n- "),
+          );
+          return;
+        }
+
+        let resp = prompt(
+          "Indiquez le nom du responsable qui valide la demande :",
+          respSelect.value !== "__NEW__" ? respSelect.value : "",
+        );
+        if (!resp) resp = "Équipe FSC";
+
+        await updateDoc(doc(db, "bookings", id), {
+          status: "Non réglé",
+          respNav: resp,
+        });
+
+        if (
+          b.phone &&
+          confirm(
+            "Demande validée ! Souhaitez-vous envoyer un SMS de confirmation au client ?",
+          )
+        ) {
+          sendSmsConfirmation(b.phone, b.client, b.date, b.slot, b.items);
+        }
+        renderAll();
+      };
+
+      window.rejectRequest = async function (id) {
+        if (confirm("Supprimer définitivement cette demande client ?")) {
+          await deleteDoc(doc(db, "bookings", id));
+          renderAll();
+        }
+      };
+
+      function renderGrid() {
+        const selectedDate = dateInput.value;
+        const gridTable = document.getElementById("grid-dispo-table");
+        gridTable.innerHTML = "";
+
+        const [y, m, d] = selectedDate.split("-").map(Number);
+        const chosenDate = new Date(y, m - 1, d);
+        const dayOfWeek = chosenDate.getDay();
+        const isLongeDay =
+          dayOfWeek === 0 || dayOfWeek === 2 || dayOfWeek === 4;
+
+        SLOTS.forEach((slot) => {
+          let rowHtml = `<tr><td class="sticky left-0 z-10 bg-slate-100 p-2 border-b border-r border-slate-300 font-bold text-slate-800 text-[11px] shadow-xs">${slot}</td>`;
+
+          Object.keys(INVENTORY).forEach((key) => {
+            if (
+              key === "longe_cote" &&
+              (!isLongeDay || !slot.startsWith("10:00"))
+            ) {
+              rowHtml += `<td class="p-2 border-b border-slate-200 bg-slate-100 text-slate-400 text-[10px]">Hors créneau</td>`;
+              return;
+            }
+
+            const avail = getAvailableStock(selectedDate, slot, key);
+            const max = INVENTORY[key].max;
+
+            if (avail === 0) {
+              rowHtml += `<td class="p-2 border-b border-slate-200 bg-red-100 text-red-700 font-bold opacity-75 text-xs">${avail} / ${max}</td>`;
+            } else {
+              rowHtml += `<td onclick="startBookingFromGrid('${slot}', '${key}')" class="p-2 border-b border-slate-200 bg-emerald-100 active:bg-emerald-200 text-emerald-800 font-bold cursor-pointer text-xs">➕ ${avail} dispo</td>`;
+            }
+          });
+          rowHtml += `</tr>`;
+          gridTable.innerHTML += rowHtml;
         });
       }
-      const itemsText = itemsArr.length > 0 ? itemsArr.join(', ') : 'votre prestation';
 
-      const message = `Bonjour ${firstName}, votre réservation au Fromentine Sailing Club pour ${itemsText} le ${formattedDate} ${formattedSlot} est confirmée ! On se retrouve à la cabane du club sur la plage. Le règlement se fera directement sur place (CB ou espèces). À très vite !`;
-      
-      const cleanPhone = phone.replace(/\s+/g, '');
-      window.open(`sms:${cleanPhone}?body=${encodeURIComponent(message)}`, '_self');
-    };
+      function renderWeek() {
+        const weekContainer = document.getElementById("week-container");
+        weekContainer.innerHTML = "";
 
-    window.approveRequest = async function(id) {
-      const b = bookings.find(item => item.id === id);
-      if (!b) return;
+        const [yIn, mIn, dIn] = dateInput.value.split("-").map(Number);
+        let curr = new Date(yIn, mIn - 1, dIn);
+        let day = curr.getDay();
+        let diff = curr.getDate() - day + (day === 0 ? -6 : 1);
+        let monday = new Date(curr.setDate(diff));
 
-      let missingItems = [];
-      if (b.items) {
-        Object.keys(b.items).forEach(k => {
-          if (b.items[k] > 0) {
-            const avail = getAvailableStock(b.date, b.slot, k);
-            if (b.items[k] > avail) missingItems.push(`${INVENTORY[k].name} (Demandé: ${b.items[k]}, Dispo: ${avail})`);
-          }
-        });
-      }
+        for (let i = 0; i < 7; i++) {
+          let d = new Date(monday);
+          d.setDate(monday.getDate() + i);
 
-      if (missingItems.length > 0) { alert(`❌ IMPOSSIBLE DE VALIDER :\nStock insuffisant pour ce créneau :\n- ` + missingItems.join('\n- ')); return; }
+          const year = d.getFullYear();
+          const month = String(d.getMonth() + 1).padStart(2, "0");
+          const dayNum = String(d.getDate()).padStart(2, "0");
+          let dateStr = `${year}-${month}-${dayNum}`;
 
-      let resp = prompt("Indiquez le nom du responsable qui valide la demande :", respSelect.value !== '__NEW__' ? respSelect.value : '');
-      if (!resp) resp = 'Équipe FSC';
+          const dayBookings = bookings.filter(
+            (b) => b.date === dateStr && b.status !== "EN_ATTENTE",
+          );
+          const dayLabel = d.toLocaleDateString("fr-FR", {
+            weekday: "long",
+            day: "numeric",
+            month: "short",
+          });
 
-      await updateDoc(doc(db, 'bookings', id), { status: 'Non réglé', respNav: resp });
-
-      if (b.phone && confirm("Demande validée ! Souhaitez-vous envoyer un SMS de confirmation au client ?")) {
-        sendSmsConfirmation(b.phone, b.client, b.date, b.slot, b.items);
-      }
-      renderAll();
-    };
-
-    window.rejectRequest = async function(id) {
-      if (confirm("Supprimer définitivement cette demande client ?")) { await deleteDoc(doc(db, 'bookings', id)); renderAll(); }
-    };
-
-    function renderGrid() {
-      const selectedDate = dateInput.value;
-      const gridTable = document.getElementById('grid-dispo-table');
-      gridTable.innerHTML = '';
-
-      const [y, m, d] = selectedDate.split('-').map(Number);
-      const chosenDate = new Date(y, m - 1, d);
-      const dayOfWeek = chosenDate.getDay();
-      const isLongeDay = (dayOfWeek === 0 || dayOfWeek === 2 || dayOfWeek === 4);
-
-      SLOTS.forEach(slot => {
-        let rowHtml = `<tr><td class="sticky left-0 z-10 bg-slate-100 p-2 border-b border-r border-slate-300 font-bold text-slate-800 text-[11px] shadow-xs">${slot}</td>`;
-        
-        Object.keys(INVENTORY).forEach(key => {
-          if (key === 'longe_cote' && (!isLongeDay || !slot.startsWith('10:00'))) {
-            rowHtml += `<td class="p-2 border-b border-slate-200 bg-slate-100 text-slate-400 text-[10px]">Hors créneau</td>`;
-            return;
-          }
-
-          const avail = getAvailableStock(selectedDate, slot, key);
-          const max = INVENTORY[key].max;
-          
-          if (avail === 0) {
-            rowHtml += `<td class="p-2 border-b border-slate-200 bg-red-100 text-red-700 font-bold opacity-75 text-xs">${avail} / ${max}</td>`;
-          } else {
-            rowHtml += `<td onclick="startBookingFromGrid('${slot}', '${key}')" class="p-2 border-b border-slate-200 bg-emerald-100 active:bg-emerald-200 text-emerald-800 font-bold cursor-pointer text-xs">➕ ${avail} dispo</td>`;
-          }
-        });
-        rowHtml += `</tr>`;
-        gridTable.innerHTML += rowHtml;
-      });
-    }
-
-    function renderWeek() {
-      const weekContainer = document.getElementById('week-container');
-      weekContainer.innerHTML = '';
-
-      const [yIn, mIn, dIn] = dateInput.value.split('-').map(Number);
-      let curr = new Date(yIn, mIn - 1, dIn);
-      let day = curr.getDay();
-      let diff = curr.getDate() - day + (day === 0 ? -6 : 1);
-      let monday = new Date(curr.setDate(diff));
-
-      for (let i = 0; i < 7; i++) {
-        let d = new Date(monday);
-        d.setDate(monday.getDate() + i);
-        
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const dayNum = String(d.getDate()).padStart(2, '0');
-        let dateStr = `${year}-${month}-${dayNum}`;
-
-        const dayBookings = bookings.filter(b => b.date === dateStr && b.status !== 'EN_ATTENTE');
-        const dayLabel = d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short' });
-
-        let dayHtml = `
+          let dayHtml = `
           <div class="border border-slate-200 rounded-2xl p-3 bg-slate-50">
             <div class="flex justify-between items-center border-b pb-1.5 mb-2">
               <h3 class="font-black capitalize text-xs text-blue-700">${dayLabel}</h3>
@@ -815,128 +1587,358 @@
             </div>
         `;
 
-        if (dayBookings.length === 0) {
-          dayHtml += `<p class="text-[11px] text-slate-400 italic">Aucune réservation</p>`;
-        } else {
-          dayHtml += `<div class="space-y-1">`;
-          dayBookings.forEach(b => {
-            let itemsSummary = [];
-            if (b.items) { Object.keys(b.items).forEach(k => { if (b.items[k] > 0) itemsSummary.push(`${b.items[k]}x ${INVENTORY[k].name}`); }); }
-            dayHtml += `
+          if (dayBookings.length === 0) {
+            dayHtml += `<p class="text-[11px] text-slate-400 italic">Aucune réservation</p>`;
+          } else {
+            dayHtml += `<div class="space-y-1">`;
+            dayBookings.forEach((b) => {
+              let itemsSummary = [];
+              if (b.items) {
+                Object.keys(b.items).forEach((k) => {
+                  if (b.items[k] > 0)
+                    itemsSummary.push(`${b.items[k]}x ${INVENTORY[k].name}`);
+                });
+              }
+              dayHtml += `
               <div class="bg-white p-2.5 rounded-xl border text-xs flex justify-between items-center shadow-xs">
                 <div>
                   <span class="font-bold text-slate-800">${b.slot}</span> — <span class="font-semibold">${b.client}</span>
-                  <div class="text-[10px] text-slate-500">${itemsSummary.join(', ')}</div>
+                  <div class="text-[10px] text-slate-500">${itemsSummary.join(", ")}</div>
                 </div>
                 <span class="font-black text-emerald-600 text-sm">${b.totalPrice}€</span>
               </div>
             `;
-          });
+            });
+            dayHtml += `</div>`;
+          }
           dayHtml += `</div>`;
+          weekContainer.innerHTML += dayHtml;
         }
-        dayHtml += `</div>`;
-        weekContainer.innerHTML += dayHtml;
       }
-    }
 
-    function buildBookingsCards(dayBookings) {
-      const activeBookings = dayBookings.filter(b => b.status !== 'EN_ATTENTE');
-      if (activeBookings.length === 0) return `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs italic border border-slate-200">Aucune réservation confirmée pour cette journée.</div>`;
+      const LONGE_SLOT = "10:00 - 11:00";
+      const LONGE_DAYS = [0, 2, 4]; // Dimanche, Mardi, Jeudi
 
-      let html = '';
-      activeBookings.forEach((b) => {
-        let itemsSummary = [];
-        if (b.items) { Object.keys(b.items).forEach(k => { if (b.items[k] > 0) itemsSummary.push(`${b.items[k]}x ${INVENTORY[k].name}`); }); }
+      function formatLongeDate(dateStr) {
+        const [y, m, d] = dateStr.split("-").map(Number);
+        return new Date(y, m - 1, d).toLocaleDateString("fr-FR", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+        });
+      }
 
-        const slotStarted = hasSlotStarted(b.date, b.slot);
-        const lateAlert = (!b.returned && isOverdue(b.date, b.slot));
-        const isPaid = (b.status === 'Réglé');
-        const itemsJson = JSON.stringify(b.items || {}).replace(/"/g, '&quot;');
+      window.goToLongeDate = function (dateStr) {
+        dateInput.value = dateStr;
+        renderAll();
+        switchView("longe");
+      };
 
+      function getNextLongeDates(fromDateStr, count) {
+        const [y, m, d] = fromDateStr.split("-").map(Number);
+        let cursor = new Date(y, m - 1, d);
+        const results = [];
+        for (let i = 0; i < 60 && results.length < count; i++) {
+          if (LONGE_DAYS.includes(cursor.getDay())) {
+            results.push(
+              `${cursor.getFullYear()}-${String(cursor.getMonth() + 1).padStart(2, "0")}-${String(cursor.getDate()).padStart(2, "0")}`,
+            );
+          }
+          cursor.setDate(cursor.getDate() + 1);
+        }
+        return results;
+      }
+
+      function renderLonge() {
+        const container = document.getElementById("longe-container");
+        const selectedDate = dateInput.value;
+        const [y, m, d] = selectedDate.split("-").map(Number);
+        const dayOfWeek = new Date(y, m - 1, d).getDay();
+        const isLongeDay = LONGE_DAYS.includes(dayOfWeek);
+        const max = INVENTORY.longe_cote.max;
+
+        const coversLonge = (b) => (b.slots || [b.slot]).includes(LONGE_SLOT);
+        const longeBookings = bookings.filter(
+          (b) =>
+            b.date === selectedDate &&
+            coversLonge(b) &&
+            b.items &&
+            b.items.longe_cote > 0 &&
+            b.status !== "EN_ATTENTE",
+        );
+        const pendingLonge = bookings.filter(
+          (b) =>
+            b.date === selectedDate &&
+            coversLonge(b) &&
+            b.items &&
+            b.items.longe_cote > 0 &&
+            b.status === "EN_ATTENTE",
+        );
+
+        let used = 0;
+        let revenue = 0;
+        longeBookings.forEach((b) => {
+          used += b.items.longe_cote;
+          revenue += b.totalPrice || 0;
+        });
+        const avail = max - used;
+
+        let html = "";
+
+        // Bandeau de session
         html += `
-          <div class="bg-white rounded-2xl p-3.5 shadow-sm border-2 ${lateAlert ? 'border-red-500 bg-red-50/50 animate-pulse' : 'border-slate-200'} space-y-2.5 ${b.returned ? 'opacity-70 bg-slate-50 border-slate-200' : ''}">
+          <section class="bg-cyan-700 text-white rounded-2xl p-4 shadow-md space-y-3">
+            <div class="flex justify-between items-start">
+              <div>
+                <h2 class="text-base font-black flex items-center gap-2">🌊 Séance Longe Côte</h2>
+                <p class="text-cyan-100 text-[11px] capitalize">${formatLongeDate(selectedDate)} — ${LONGE_SLOT}</p>
+              </div>
+              <div class="text-right">
+                <span class="block text-[9px] uppercase tracking-wider text-cyan-200 font-bold">Recette Longe</span>
+                <span class="text-lg font-black text-emerald-300">${revenue} €</span>
+              </div>
+            </div>
+            ${
+              isLongeDay
+                ? `<div class="grid grid-cols-2 gap-2">
+                    <div class="bg-cyan-800/70 rounded-xl p-2.5 border border-cyan-500/40 text-center">
+                      <span class="block text-[9px] uppercase tracking-wider text-cyan-200 font-bold">Inscrits</span>
+                      <span class="text-xl font-black">${used} / ${max}</span>
+                    </div>
+                    <div class="bg-cyan-800/70 rounded-xl p-2.5 border border-cyan-500/40 text-center">
+                      <span class="block text-[9px] uppercase tracking-wider text-cyan-200 font-bold">Places restantes</span>
+                      <span class="text-xl font-black ${avail > 0 ? "text-emerald-300" : "text-red-300"}">${avail}</span>
+                    </div>
+                  </div>`
+                : `<div class="bg-amber-400 text-slate-900 rounded-xl p-2.5 text-[11px] font-bold text-center">
+                    ⚠️ Pas de Longe Côte ce jour (uniquement Mardi, Jeudi, Dimanche à 10h00)
+                  </div>`
+            }
+          </section>`;
+
+        // Prochaines séances
+        const nextDates = getNextLongeDates(selectedDate, isLongeDay ? 3 : 3);
+        if (nextDates.length > 0) {
+          html += `
+            <section class="bg-white rounded-2xl p-3 shadow-sm border border-slate-200 space-y-2">
+              <h3 class="text-xs font-black text-slate-700 uppercase tracking-wider">📅 Prochaines séances</h3>
+              <div class="grid grid-cols-3 gap-2">
+                ${nextDates
+                  .map((dt) => {
+                    const dtUsed = bookings
+                      .filter(
+                        (b) =>
+                          b.date === dt &&
+                          coversLonge(b) &&
+                          b.items &&
+                          b.items.longe_cote > 0 &&
+                          b.status !== "EN_ATTENTE",
+                      )
+                      .reduce((s, b) => s + b.items.longe_cote, 0);
+                    const isActive = dt === selectedDate;
+                    return `<button onclick="goToLongeDate('${dt}')" class="rounded-xl p-2 text-center border ${isActive ? "bg-cyan-600 text-white border-cyan-600" : "bg-cyan-50 text-cyan-900 border-cyan-200 active:bg-cyan-100"}">
+                        <span class="block text-[10px] font-bold capitalize leading-tight">${formatLongeDate(dt).replace(/ \d{4}$/, "")}</span>
+                        <span class="block text-[10px] font-black mt-0.5">${dtUsed}/${max}</span>
+                      </button>`;
+                  })
+                  .join("")}
+              </div>
+            </section>`;
+        }
+
+        // Demandes en attente pour la longe
+        if (pendingLonge.length > 0) {
+          html += `
+            <section class="space-y-2">
+              <h3 class="text-xs font-black text-amber-700 uppercase tracking-wider">📩 Demandes Longe en attente (${pendingLonge.length})</h3>
+              ${pendingLonge
+                .map(
+                  (b) => `
+                <div class="bg-amber-50 border-2 border-amber-300 rounded-2xl p-3 flex justify-between items-center gap-2">
+                  <div class="min-w-0">
+                    <h4 class="font-black text-sm text-slate-800 truncate">${b.client}</h4>
+                    <span class="text-[11px] text-slate-600">${b.items.longe_cote} place(s) • ${b.usersNames || ""}</span>
+                    ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold block">📞 ${b.phone}</a>` : ""}
+                  </div>
+                  <span class="text-sm font-black text-slate-800 whitespace-nowrap">${b.totalPrice} €</span>
+                </div>`,
+                )
+                .join("")}
+              <button onclick="switchView('requests')" class="w-full bg-amber-500 text-slate-900 font-black text-xs py-2.5 rounded-xl">➡️ Traiter les demandes</button>
+            </section>`;
+        }
+
+        // Liste des inscrits confirmés
+        html += `<section class="space-y-2">
+          <h3 class="text-xs font-black text-slate-700 uppercase tracking-wider">👥 Inscrits confirmés</h3>`;
+
+        if (longeBookings.length === 0) {
+          html += `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs italic border border-slate-200">Aucun inscrit confirmé pour cette séance.</div>`;
+        } else {
+          longeBookings.forEach((b) => {
+            const itemsJson = JSON.stringify(b.items || {}).replace(
+              /"/g,
+              "&quot;",
+            );
+            html += `
+              <div class="bg-white rounded-2xl p-3.5 shadow-sm border-2 border-cyan-200 space-y-2 ${b.returned ? "opacity-70 bg-slate-50" : ""}">
+                <div class="flex justify-between items-start">
+                  <div class="min-w-0">
+                    <h4 class="font-black text-sm text-slate-800 leading-tight truncate">${b.client}</h4>
+                    ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold inline-block mr-2">📞 ${b.phone}</a>` : ""}
+                    ${b.phone ? `<button onclick="sendSmsConfirmation('${b.phone}', '${b.client}', '${b.date}', '${b.slot}', ${itemsJson})" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300">📲 SMS</button>` : ""}
+                  </div>
+                  <div class="text-right whitespace-nowrap">
+                    <span class="text-base font-black text-slate-800 block">${b.totalPrice} €</span>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${b.status === "Réglé" ? "bg-emerald-600 text-white" : "bg-amber-100 text-amber-800 border border-amber-300"}">${b.status === "Réglé" ? "✅ Réglé" : "⏳ Non réglé"}</span>
+                  </div>
+                </div>
+                <div class="bg-cyan-50 p-2 rounded-xl text-xs space-y-1 border border-cyan-100">
+                  <div class="font-bold text-cyan-900">🌊 ${b.items.longe_cote} place(s) de Longe Côte</div>
+                  ${b.usersNames ? `<div class="text-[11px] text-slate-600">👥 ${b.usersNames}</div>` : ""}
+                  ${b.emergency ? `<div class="text-[10px] text-red-600 font-bold">🚨 Urgence: ${b.emergency}</div>` : ""}
+                  <div class="text-[10px] text-slate-500">👤 Prise en charge: <span class="font-bold text-cyan-700">${b.respNav || "N/A"}</span></div>
+                </div>
+                <div class="flex justify-end">
+                  <button onclick="openEditModal('${b.id}')" class="bg-blue-50 text-blue-700 font-bold text-xs px-3 py-1.5 rounded-xl border border-blue-200">✏️ Modifier</button>
+                </div>
+              </div>`;
+          });
+        }
+        html += `</section>`;
+
+        container.innerHTML = html;
+      }
+
+      function buildBookingsCards(dayBookings) {
+        const activeBookings = dayBookings.filter(
+          (b) => b.status !== "EN_ATTENTE",
+        );
+        if (activeBookings.length === 0)
+          return `<div class="bg-white rounded-2xl p-6 text-center text-slate-400 text-xs italic border border-slate-200">Aucune réservation confirmée pour cette journée.</div>`;
+
+        let html = "";
+        activeBookings.forEach((b) => {
+          let itemsSummary = [];
+          if (b.items) {
+            Object.keys(b.items).forEach((k) => {
+              if (b.items[k] > 0)
+                itemsSummary.push(`${b.items[k]}x ${INVENTORY[k].name}`);
+            });
+          }
+
+          const slotStarted = hasSlotStarted(b.date, b.slot);
+          const lateAlert = !b.returned && isOverdue(b.date, b.slot);
+          const isPaid = b.status === "Réglé";
+          const itemsJson = JSON.stringify(b.items || {}).replace(
+            /"/g,
+            "&quot;",
+          );
+
+          html += `
+          <div class="bg-white rounded-2xl p-3.5 shadow-sm border-2 ${lateAlert ? "border-red-500 bg-red-50/50 animate-pulse" : "border-slate-200"} space-y-2.5 ${b.returned ? "opacity-70 bg-slate-50 border-slate-200" : ""}">
             <div class="flex justify-between items-start">
               <div>
                 <span class="inline-block bg-blue-100 text-blue-900 font-black text-xs px-2.5 py-1 rounded-lg border border-blue-200 mb-1">${b.slot}</span>
                 <h3 class="font-black text-sm text-slate-800 leading-tight">${b.client}</h3>
-                ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold inline-block mt-0.5 mr-2">📞 ${b.phone}</a>` : ''}
-                ${b.phone ? `<button onclick="sendSmsConfirmation('${b.phone}', '${b.client}', '${b.date}', '${b.slot}', ${itemsJson})" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300 active:scale-95 transition-all">📲 Envoyer SMS</button>` : ''}
+                ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold inline-block mt-0.5 mr-2">📞 ${b.phone}</a>` : ""}
+                ${b.phone ? `<button onclick="sendSmsConfirmation('${b.phone}', '${b.client}', '${b.date}', '${b.slot}', ${itemsJson})" class="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded border border-emerald-300 active:scale-95 transition-all">📲 Envoyer SMS</button>` : ""}
               </div>
               <div class="text-right">
                 <span class="text-base font-black text-slate-800 block">${b.totalPrice} €</span>
-                <button data-id="${b.id}" data-status="${b.status}" class="toggle-paid text-[10px] font-bold px-2 py-1 rounded-lg ${isPaid ? 'bg-emerald-600 text-white' : 'bg-amber-100 text-amber-800 border border-amber-300'}">
-                  ${isPaid ? '✅ Réglé' : '⏳ Non réglé'}
+                <button data-id="${b.id}" data-status="${b.status}" class="toggle-paid text-[10px] font-bold px-2 py-1 rounded-lg ${isPaid ? "bg-emerald-600 text-white" : "bg-amber-100 text-amber-800 border border-amber-300"}">
+                  ${isPaid ? "✅ Réglé" : "⏳ Non réglé"}
                 </button>
               </div>
             </div>
             <div class="bg-slate-50 p-2 rounded-xl text-xs space-y-1 border border-slate-100">
-              <div class="font-bold text-slate-700">🏄‍♂️ ${itemsSummary.join(', ')}</div>
-              ${b.usersNames ? `<div class="text-[11px] text-slate-600">👥 Participants: ${b.usersNames}</div>` : ''}
-              ${b.emergency ? `<div class="text-[10px] text-red-600 font-bold">🚨 Urgence: ${b.emergency}</div>` : ''}
-              <div class="text-[10px] text-slate-500 pt-0.5">👤 Prise en charge: <span class="font-bold text-blue-700">${b.respNav || 'N/A'}</span></div>
+              <div class="font-bold text-slate-700">🏄‍♂️ ${itemsSummary.join(", ")}</div>
+              ${b.usersNames ? `<div class="text-[11px] text-slate-600">👥 Participants: ${b.usersNames}</div>` : ""}
+              ${b.emergency ? `<div class="text-[10px] text-red-600 font-bold">🚨 Urgence: ${b.emergency}</div>` : ""}
+              <div class="text-[10px] text-slate-500 pt-0.5">👤 Prise en charge: <span class="font-bold text-blue-700">${b.respNav || "N/A"}</span></div>
             </div>
             <div class="flex items-center justify-between pt-1 border-t border-slate-100">
               <div>
-                ${!slotStarted ? `<span class="text-[11px] font-bold text-slate-500 bg-slate-100 border px-2.5 py-1 rounded-xl">⏳ À venir</span>` : `
+                ${
+                  !slotStarted
+                    ? `<span class="text-[11px] font-bold text-slate-500 bg-slate-100 border px-2.5 py-1 rounded-xl">⏳ À venir</span>`
+                    : `
                   <label class="flex items-center gap-2 cursor-pointer bg-slate-100 px-3 py-1.5 rounded-xl border border-slate-200">
-                    <input type="checkbox" ${b.returned ? 'checked' : ''} data-id="${b.id}" class="toggle-returned w-5 h-5 accent-emerald-600 rounded">
-                    <span class="text-xs font-bold ${b.returned ? 'text-emerald-700' : (lateAlert ? 'text-red-600 font-black animate-ping' : 'text-red-700')}">
-                      ${b.returned ? '⚓ Rentré' : (lateAlert ? '⚠️ RETARD' : '🚨 Sur l\'eau')}
+                    <input type="checkbox" ${b.returned ? "checked" : ""} data-id="${b.id}" class="toggle-returned w-5 h-5 accent-emerald-600 rounded">
+                    <span class="text-xs font-bold ${b.returned ? "text-emerald-700" : lateAlert ? "text-red-600 font-black animate-ping" : "text-red-700"}">
+                      ${b.returned ? "⚓ Rentré" : lateAlert ? "⚠️ RETARD" : "🚨 Sur l'eau"}
                     </span>
                   </label>
-                `}
+                `
+                }
               </div>
               <div class="flex gap-1.5">
                 <button data-id="${b.id}" class="edit-btn bg-blue-50 text-blue-700 font-bold text-xs px-3 py-1.5 rounded-xl border border-blue-200">✏️ Modifier</button>
                 <button data-id="${b.id}" class="delete-btn bg-red-50 text-red-600 font-bold text-xs px-2.5 py-1.5 rounded-xl border border-red-200">🗑️</button>
               </div>
             </div>
-            ${b.returned && b.returnedBy ? `<div class="text-[10px] text-emerald-800 font-bold text-right">✓ Réceptionné par: ${b.returnedBy}</div>` : ''}
+            ${b.returned && b.returnedBy ? `<div class="text-[10px] text-emerald-800 font-bold text-right">✓ Réceptionné par: ${b.returnedBy}</div>` : ""}
           </div>
         `;
-      });
-      return html;
-    }
+        });
+        return html;
+      }
 
-    function renderAll() {
-      updateRespSelectOptions();
-      updateEquipmentSelectors();
-      
-      const selectedDate = dateInput.value;
-      const dayBookings = bookings.filter(b => b.date === selectedDate);
-      
-      document.getElementById('pending-count').innerText = bookings.filter(b => b.status === 'EN_ATTENTE').length;
-      
-      let totalRev = 0; let onWaterCount = 0; let activeOnWaterList = [];
-      dayBookings.forEach((b) => {
-        if (b.status !== 'EN_ATTENTE') {
-          totalRev += b.totalPrice;
-          if (hasSlotStarted(b.date, b.slot) && !b.returned) { onWaterCount++; activeOnWaterList.push(b); }
-        }
-      });
+      function renderAll() {
+        updateRespSelectOptions();
+        populateSlotOptions();
+        updateEquipmentSelectors();
 
-      const cardsHtml = buildBookingsCards(dayBookings);
-      document.getElementById('bookings-cards-day').innerHTML = cardsHtml;
-      document.getElementById('bookings-cards-grid').innerHTML = cardsHtml;
-      document.getElementById('total-count').innerText = dayBookings.filter(b => b.status !== 'EN_ATTENTE').length;
-      document.getElementById('total-on-water-count').innerText = onWaterCount;
-      document.getElementById('total-revenue').innerText = `${totalRev} € 📊`;
+        const selectedDate = dateInput.value;
+        const dayBookings = bookings.filter((b) => b.date === selectedDate);
 
-      const onWaterList = document.getElementById('on-water-list');
-      if (activeOnWaterList.length > 0) {
-        onWaterList.innerHTML = '';
-        activeOnWaterList.forEach(b => {
-          let itemsArr = [];
-          if (b.items) { Object.keys(b.items).forEach(k => { if (b.items[k] > 0) itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`); }); }
-          const late = isOverdue(b.date, b.slot);
+        document.getElementById("pending-count").innerText = bookings.filter(
+          (b) => b.status === "EN_ATTENTE",
+        ).length;
 
-          onWaterList.innerHTML += `
-            <div class="bg-slate-800 border ${late ? 'border-red-500 bg-red-950/40' : 'border-slate-700'} rounded-xl p-3 text-xs flex justify-between items-center shadow-md">
+        let totalRev = 0;
+        let onWaterCount = 0;
+        let activeOnWaterList = [];
+        dayBookings.forEach((b) => {
+          if (b.status !== "EN_ATTENTE") {
+            totalRev += b.totalPrice;
+            if (hasSlotStarted(b.date, b.slot) && !b.returned) {
+              onWaterCount++;
+              activeOnWaterList.push(b);
+            }
+          }
+        });
+
+        const cardsHtml = buildBookingsCards(dayBookings);
+        document.getElementById("bookings-cards-day").innerHTML = cardsHtml;
+        document.getElementById("bookings-cards-grid").innerHTML = cardsHtml;
+        document.getElementById("total-count").innerText = dayBookings.filter(
+          (b) => b.status !== "EN_ATTENTE",
+        ).length;
+        document.getElementById("total-on-water-count").innerText =
+          onWaterCount;
+        document.getElementById("total-revenue").innerText = `${totalRev} € 📊`;
+
+        const onWaterList = document.getElementById("on-water-list");
+        if (activeOnWaterList.length > 0) {
+          onWaterList.innerHTML = "";
+          activeOnWaterList.forEach((b) => {
+            let itemsArr = [];
+            if (b.items) {
+              Object.keys(b.items).forEach((k) => {
+                if (b.items[k] > 0)
+                  itemsArr.push(`${b.items[k]}x ${INVENTORY[k].name}`);
+              });
+            }
+            const late = isOverdue(b.date, b.slot);
+
+            onWaterList.innerHTML += `
+            <div class="bg-slate-800 border ${late ? "border-red-500 bg-red-950/40" : "border-slate-700"} rounded-xl p-3 text-xs flex justify-between items-center shadow-md">
               <div>
-                <span class="font-black text-amber-300 text-sm block">${b.client} ${b.phone ? `<a href="tel:${b.phone}" class="text-blue-200 text-xs underline">📞 ${b.phone}</a>` : ''}</span>
-                <span class="text-xs text-white font-bold block mt-0.5">${itemsArr.join(', ')}</span>
-                ${b.usersNames ? `<span class="text-[11px] text-slate-300 block">👥 ${b.usersNames}</span>` : ''}
-                <span class="text-[10px] ${late ? 'text-red-400 font-bold' : 'text-slate-400'}">Créneau: ${b.slot} ${late ? '⚠️ RETARD' : ''} • Resp Nav: ${b.respNav || 'N/A'}</span>
+                <span class="font-black text-amber-300 text-sm block">${b.client} ${b.phone ? `<a href="tel:${b.phone}" class="text-blue-200 text-xs underline">📞 ${b.phone}</a>` : ""}</span>
+                <span class="text-xs text-white font-bold block mt-0.5">${itemsArr.join(", ")}</span>
+                ${b.usersNames ? `<span class="text-[11px] text-slate-300 block">👥 ${b.usersNames}</span>` : ""}
+                <span class="text-[10px] ${late ? "text-red-400 font-bold" : "text-slate-400"}">Créneau: ${b.slot} ${late ? "⚠️ RETARD" : ""} • Resp Nav: ${b.respNav || "N/A"}</span>
               </div>
               <div class="flex flex-col gap-1.5 items-end">
                 <button data-id="${b.id}" class="quick-return-btn bg-emerald-500 text-white font-black text-xs px-3 py-2 rounded-xl shadow">⚓ Valider Rentré</button>
@@ -944,117 +1946,252 @@
               </div>
             </div>
           `;
-        });
-      } else { onWaterList.innerHTML = `<p class="text-xs text-slate-400 italic">Aucun client actuellement sur l'eau.</p>`; }
-
-      document.querySelectorAll('.quick-return-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const docId = e.target.getAttribute('data-id');
-          let returnedBy = prompt("Nom du responsable qui réceptionne le matériel :", respSelect.value !== '__NEW__' ? respSelect.value : '');
-          if (!returnedBy) returnedBy = 'Équipe Plage';
-          await updateDoc(doc(db, 'bookings', docId), { returned: true, returnedBy: returnedBy });
-        });
-      });
-      document.querySelectorAll('.toggle-returned').forEach(chk => {
-        chk.addEventListener('change', async (e) => {
-          const docId = e.target.getAttribute('data-id');
-          const isChecked = e.target.checked;
-          let returnedBy = '';
-          if (isChecked) { returnedBy = prompt("Nom du responsable qui réceptionne le matériel :", respSelect.value !== '__NEW__' ? respSelect.value : ''); if (!returnedBy) returnedBy = 'Équipe Plage'; }
-          await updateDoc(doc(db, 'bookings', docId), { returned: isChecked, returnedBy: returnedBy });
-        });
-      });
-      document.querySelectorAll('.toggle-paid').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          const docId = e.target.getAttribute('data-id');
-          await updateDoc(doc(db, 'bookings', docId), { status: (e.target.getAttribute('data-status') === 'Réglé') ? 'Non réglé' : 'Réglé' });
-        });
-      });
-      document.querySelectorAll('.edit-btn').forEach(btn => { btn.addEventListener('click', (e) => openEditModal(e.target.getAttribute('data-id'))); });
-      document.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-          if (confirm("Confirmer la suppression de cette réservation ?")) { await deleteDoc(doc(db, 'bookings', e.target.getAttribute('data-id'))); }
-        });
-      });
-
-      renderPendingRequests(); renderGrid(); renderWeek();
-    }
-
-    window.openEditModal = function(id) {
-      const b = bookings.find(item => item.id === id);
-      if (!b) return;
-      document.getElementById('edit-id').value = b.id; document.getElementById('edit-slot').value = b.slot;
-      document.getElementById('edit-resp-name').value = b.respNav || ''; document.getElementById('edit-client-name').value = b.client || '';
-      document.getElementById('edit-is-member').checked = b.isMember || false; document.getElementById('edit-client-phone').value = b.phone || '';
-      document.getElementById('edit-users-names').value = b.usersNames || ''; document.getElementById('edit-emergency-contact').value = b.emergency || '';
-      document.getElementById('edit-payment-status').value = b.status || 'Non réglé';
-      Object.keys(INVENTORY).forEach(key => { const el = document.getElementById(`edit-qty-${key}`); if (el) el.value = (b.items && b.items[key]) ? b.items[key] : 0; });
-      document.getElementById('edit-modal').classList.remove('hidden');
-    };
-
-    window.closeEditModal = function() { document.getElementById('edit-modal').classList.add('hidden'); };
-    window.handleModalBackdropClick = function(e) { if (e.target.id === 'edit-modal') closeEditModal(); };
-
-    editForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const docId = document.getElementById('edit-id').value; const newSlot = document.getElementById('edit-slot').value;
-      const currentDate = dateInput.value; const isMember = document.getElementById('edit-is-member').checked;
-      let selectedItems = {}; let totalPrice = 0; let totalQty = 0;
-
-      for (let key of Object.keys(INVENTORY)) {
-        const qty = parseInt(document.getElementById(`edit-qty-${key}`).value) || 0;
-        if (qty > 0) {
-          const avail = getAvailableStock(currentDate, newSlot, key, docId);
-          if (qty > avail) { alert(`Stock insuffisant pour ${INVENTORY[key].name} !`); return; }
-          const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
-          selectedItems[key] = qty; totalPrice += qty * price; totalQty += qty;
+          });
+        } else {
+          onWaterList.innerHTML = `<p class="text-xs text-slate-400 italic">Aucun client actuellement sur l'eau.</p>`;
         }
+
+        document.querySelectorAll(".quick-return-btn").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const docId = e.target.getAttribute("data-id");
+            let returnedBy = prompt(
+              "Nom du responsable qui réceptionne le matériel :",
+              respSelect.value !== "__NEW__" ? respSelect.value : "",
+            );
+            if (!returnedBy) returnedBy = "Équipe Plage";
+            await updateDoc(doc(db, "bookings", docId), {
+              returned: true,
+              returnedBy: returnedBy,
+            });
+          });
+        });
+        document.querySelectorAll(".toggle-returned").forEach((chk) => {
+          chk.addEventListener("change", async (e) => {
+            const docId = e.target.getAttribute("data-id");
+            const isChecked = e.target.checked;
+            let returnedBy = "";
+            if (isChecked) {
+              returnedBy = prompt(
+                "Nom du responsable qui réceptionne le matériel :",
+                respSelect.value !== "__NEW__" ? respSelect.value : "",
+              );
+              if (!returnedBy) returnedBy = "Équipe Plage";
+            }
+            await updateDoc(doc(db, "bookings", docId), {
+              returned: isChecked,
+              returnedBy: returnedBy,
+            });
+          });
+        });
+        document.querySelectorAll(".toggle-paid").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            const docId = e.target.getAttribute("data-id");
+            await updateDoc(doc(db, "bookings", docId), {
+              status:
+                e.target.getAttribute("data-status") === "Réglé"
+                  ? "Non réglé"
+                  : "Réglé",
+            });
+          });
+        });
+        document.querySelectorAll(".edit-btn").forEach((btn) => {
+          btn.addEventListener("click", (e) =>
+            openEditModal(e.target.getAttribute("data-id")),
+          );
+        });
+        document.querySelectorAll(".delete-btn").forEach((btn) => {
+          btn.addEventListener("click", async (e) => {
+            if (confirm("Confirmer la suppression de cette réservation ?")) {
+              await deleteDoc(
+                doc(db, "bookings", e.target.getAttribute("data-id")),
+              );
+            }
+          });
+        });
+
+        renderPendingRequests();
+        renderGrid();
+        renderLonge();
+        renderWeek();
       }
-      if (totalQty === 0) { alert("Veuillez sélectionner au moins un matériel."); return; }
-      await updateDoc(doc(db, 'bookings', docId), {
-        slot: newSlot, respNav: document.getElementById('edit-resp-name').value, client: document.getElementById('edit-client-name').value,
-        isMember: isMember, phone: document.getElementById('edit-client-phone').value || '', usersNames: document.getElementById('edit-users-names').value || '',
-        emergency: document.getElementById('edit-emergency-contact').value || '', status: document.getElementById('edit-payment-status').value, items: selectedItems, totalPrice: totalPrice
-      });
-      closeEditModal();
-    });
 
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const selectedDate = dateInput.value; const selectedSlot = formSlotSelect.value; const isMember = formIsMemberCheck.checked;
-      let respName = respSelect.value; if (respName === '__NEW__') respName = respCustom.value.trim();
-      if (!respName) { alert("Veuillez choisir le responsable de la réservation."); respSelect.focus(); return; }
+      window.openEditModal = function (id) {
+        const b = bookings.find((item) => item.id === id);
+        if (!b) return;
+        document.getElementById("edit-id").value = b.id;
+        // Reconstitue le créneau de début + la durée à partir des heures
+        // occupées (b.slots) ; les anciennes réservations n'ont qu'un `slot`.
+        const existingSlots = b.slots || [b.slot];
+        const startTime = existingSlots[0].split(" - ")[0];
+        editSlotSelect.value = startTime;
+        populateEditDurationOptions();
+        editDurationSelect.value = String(
+          Math.min(existingSlots.length, getMaxDuration(startTime)),
+        );
+        document.getElementById("edit-resp-name").value = b.respNav || "";
+        document.getElementById("edit-client-name").value = b.client || "";
+        document.getElementById("edit-is-member").checked = b.isMember || false;
+        document.getElementById("edit-client-phone").value = b.phone || "";
+        document.getElementById("edit-users-names").value = b.usersNames || "";
+        document.getElementById("edit-emergency-contact").value =
+          b.emergency || "";
+        document.getElementById("edit-payment-status").value =
+          b.status || "Non réglé";
+        Object.keys(INVENTORY).forEach((key) => {
+          const el = document.getElementById(`edit-qty-${key}`);
+          if (el) el.value = b.items && b.items[key] ? b.items[key] : 0;
+        });
+        document.getElementById("edit-modal").classList.remove("hidden");
+      };
 
-      let selectedItems = {}; let totalPrice = 0; let totalQty = 0;
-      for (let key of Object.keys(INVENTORY)) {
-        const el = document.getElementById(`qty-${key}`);
-        if (el) {
-          const qty = parseInt(el.value) || 0;
+      window.closeEditModal = function () {
+        document.getElementById("edit-modal").classList.add("hidden");
+      };
+      window.handleModalBackdropClick = function (e) {
+        if (e.target.id === "edit-modal") closeEditModal();
+      };
+
+      editForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const docId = document.getElementById("edit-id").value;
+        const startSlot = document.getElementById("edit-slot").value;
+        const duration = parseInt(editDurationSelect.value) || 1;
+        const coveredSlots = getCoveredSlots(startSlot, duration);
+        const currentDate = dateInput.value;
+        const isMember = document.getElementById("edit-is-member").checked;
+        let selectedItems = {};
+        let totalPrice = 0;
+        let totalQty = 0;
+
+        for (let key of Object.keys(INVENTORY)) {
+          const qty =
+            parseInt(document.getElementById(`edit-qty-${key}`).value) || 0;
           if (qty > 0) {
-            const avail = getAvailableStock(selectedDate, selectedSlot, key);
-            if (qty > avail) { alert(`Stock insuffisant pour ${INVENTORY[key].name} ! Seul(s) ${avail} disponible(s).`); return; }
-            const price = isMember ? Math.max(0, INVENTORY[key].price - 5) : INVENTORY[key].price;
-            selectedItems[key] = qty; totalPrice += qty * price; totalQty += qty;
+            const avail = getItemAvailability(
+              currentDate,
+              coveredSlots,
+              key,
+              docId,
+            );
+            if (qty > avail) {
+              alert(
+                `Stock insuffisant pour ${INVENTORY[key].name} sur toute la durée ! Seul(s) ${avail} disponible(s).`,
+              );
+              return;
+            }
+            const price = isMember
+              ? Math.max(0, INVENTORY[key].price - 5)
+              : INVENTORY[key].price;
+            selectedItems[key] = qty;
+            totalPrice += qty * price;
+            totalQty += qty;
           }
         }
-      }
-      if (totalQty === 0) { alert("Veuillez sélectionner au moins un matériel ou une séance."); return; }
-
-      await addDoc(bookingsCol, {
-        date: selectedDate, slot: selectedSlot, respNav: respName, client: document.getElementById('client-name').value, isMember: isMember,
-        phone: document.getElementById('client-phone').value || '', usersNames: document.getElementById('users-names').value || '',
-        emergency: document.getElementById('emergency-contact').value || '', status: document.getElementById('payment-status').value,
-        returned: false, items: selectedItems, totalPrice: totalPrice, createdAt: Date.now()
+        if (totalQty === 0) {
+          alert("Veuillez sélectionner au moins un matériel.");
+          return;
+        }
+        await updateDoc(doc(db, "bookings", docId), {
+          slot: getDisplaySlot(startSlot, duration),
+          slots: coveredSlots,
+          respNav: document.getElementById("edit-resp-name").value,
+          client: document.getElementById("edit-client-name").value,
+          isMember: isMember,
+          phone: document.getElementById("edit-client-phone").value || "",
+          usersNames: document.getElementById("edit-users-names").value || "",
+          emergency:
+            document.getElementById("edit-emergency-contact").value || "",
+          status: document.getElementById("edit-payment-status").value,
+          items: selectedItems,
+          totalPrice: totalPrice,
+        });
+        closeEditModal();
       });
 
-      respSelect.value = ''; respCustom.value = ''; respCustom.classList.add('hidden');
-      document.getElementById('client-name').value = ''; document.getElementById('client-phone').value = '';
-      document.getElementById('users-names').value = ''; document.getElementById('emergency-contact').value = '';
-      document.getElementById('payment-status').value = 'Non réglé'; formIsMemberCheck.checked = false; updateEquipmentSelectors();
-    });
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const selectedDate = dateInput.value;
+        const selectedSlot = formSlotSelect.value;
+        if (!selectedSlot) {
+          alert("Veuillez choisir un créneau horaire.");
+          return;
+        }
+        const duration = parseInt(formDurationSelect.value) || 1;
+        const coveredSlots = getCoveredSlots(selectedSlot, duration);
+        const isMember = formIsMemberCheck.checked;
+        let respName = respSelect.value;
+        if (respName === "__NEW__") respName = respCustom.value.trim();
+        if (!respName) {
+          alert("Veuillez choisir le responsable de la réservation.");
+          respSelect.focus();
+          return;
+        }
 
-    dateInput.addEventListener('change', renderAll);
-    setInterval(renderAll, 30000);
-  </script>
-</body>
+        let selectedItems = {};
+        let totalPrice = 0;
+        let totalQty = 0;
+        for (let key of Object.keys(INVENTORY)) {
+          const el = document.getElementById(`qty-${key}`);
+          if (el) {
+            const qty = parseInt(el.value) || 0;
+            if (qty > 0) {
+              const avail = getItemAvailability(
+                selectedDate,
+                coveredSlots,
+                key,
+              );
+              if (qty > avail) {
+                alert(
+                  `Stock insuffisant pour ${INVENTORY[key].name} sur toute la durée ! Seul(s) ${avail} disponible(s).`,
+                );
+                return;
+              }
+              const price = isMember
+                ? Math.max(0, INVENTORY[key].price - 5)
+                : INVENTORY[key].price;
+              selectedItems[key] = qty;
+              totalPrice += qty * price;
+              totalQty += qty;
+            }
+          }
+        }
+        if (totalQty === 0) {
+          alert("Veuillez sélectionner au moins un matériel ou une séance.");
+          return;
+        }
+
+        await addDoc(bookingsCol, {
+          date: selectedDate,
+          slot: getDisplaySlot(selectedSlot, duration),
+          slots: coveredSlots,
+          respNav: respName,
+          client: document.getElementById("client-name").value,
+          isMember: isMember,
+          phone: document.getElementById("client-phone").value || "",
+          usersNames: document.getElementById("users-names").value || "",
+          emergency: document.getElementById("emergency-contact").value || "",
+          status: document.getElementById("payment-status").value,
+          returned: false,
+          items: selectedItems,
+          totalPrice: totalPrice,
+          createdAt: Date.now(),
+        });
+
+        respSelect.value = "";
+        respCustom.value = "";
+        respCustom.classList.add("hidden");
+        document.getElementById("client-name").value = "";
+        document.getElementById("client-phone").value = "";
+        document.getElementById("users-names").value = "";
+        document.getElementById("emergency-contact").value = "";
+        document.getElementById("payment-status").value = "Non réglé";
+        formIsMemberCheck.checked = false;
+        populateDurationOptions();
+        updateEquipmentSelectors();
+      });
+
+      dateInput.addEventListener("change", renderAll);
+      setInterval(renderAll, 30000);
+    </script>
+  </body>
 </html>
