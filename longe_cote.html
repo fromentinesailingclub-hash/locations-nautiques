@@ -137,7 +137,7 @@
           >
             <div>
               <span class="font-bold text-xs block text-slate-800"
-                >Séance Longe Côte (Prêt combi inclus)</span
+                >Séance Longe Côte</span
               >
               <span class="text-[10px]" id="price-label">14€/personne</span>
             </div>
@@ -152,6 +152,50 @@
               <option value="4">4</option>
             </select>
           </div>
+          <!-- Consignes équipement -->
+          <div
+            class="bg-amber-50 border border-amber-200 rounded-xl p-3 text-[11px] text-amber-900 leading-relaxed space-y-1 mt-2"
+          >
+            <p>👟 <b>Prévoyez des chaussures fermées adaptées à l'eau.</b></p>
+            <p>
+              La combinaison n'est pas fournie d'office :
+              <b>prêt sur demande</b> (cochez ci-dessous).
+            </p>
+          </div>
+
+          <!-- Besoin d'une combinaison -->
+          <div
+            class="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2"
+          >
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input
+                type="checkbox"
+                id="needs-wetsuit"
+                class="w-4 h-4 accent-cyan-600 rounded"
+              />
+              <span class="text-xs font-black text-slate-800"
+                >J'ai besoin d'une combinaison (prêt sur demande)</span
+              >
+            </label>
+            <div id="wetsuit-size-wrap" class="hidden">
+              <label class="block text-[11px] font-bold text-slate-600 mb-1"
+                >Taille de combinaison *</label
+              >
+              <select
+                id="wetsuit-size"
+                class="w-full border rounded-xl p-2.5 text-xs font-bold bg-white outline-none"
+              >
+                <option value="" disabled selected>
+                  -- Choisir la taille --
+                </option>
+                <option value="M">M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+                <option value="XXL">XXL</option>
+              </select>
+            </div>
+          </div>
+
           <div
             class="bg-cyan-50 p-3 rounded-xl border border-cyan-200 flex justify-between items-center mt-2"
           >
@@ -172,7 +216,7 @@
             <textarea
               id="participants"
               rows="2"
-              placeholder="Noms et tailles des combinaisons..."
+              placeholder="Noms et âges des participants..."
               class="w-full border rounded-xl p-2.5 text-xs outline-none focus:ring-2 focus:ring-cyan-500"
               required
             ></textarea>
@@ -227,6 +271,19 @@
       const slotSelect = document.getElementById("slot");
       const qtySelect = document.getElementById("qty");
       const isMemberCheck = document.getElementById("is-member");
+      const needsWetsuitCheck = document.getElementById("needs-wetsuit");
+      const wetsuitSizeWrap = document.getElementById("wetsuit-size-wrap");
+      const wetsuitSizeSelect = document.getElementById("wetsuit-size");
+
+      // Affiche le choix de la taille seulement si une combinaison est demandée.
+      needsWetsuitCheck.addEventListener("change", () => {
+        if (needsWetsuitCheck.checked) {
+          wetsuitSizeWrap.classList.remove("hidden");
+        } else {
+          wetsuitSizeWrap.classList.add("hidden");
+          wetsuitSizeSelect.value = "";
+        }
+      });
 
       const today = new Date();
       dateInput.value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -286,6 +343,13 @@
             return;
           }
 
+          const needsWetsuit = needsWetsuitCheck.checked;
+          const wetsuitSize = needsWetsuit ? wetsuitSizeSelect.value : "";
+          if (needsWetsuit && !wetsuitSize) {
+            alert("Veuillez indiquer la taille de combinaison souhaitée.");
+            return;
+          }
+
           const isMember = isMemberCheck.checked;
           const price = isMember ? 9 : 14;
           const totalPrice = qty * price;
@@ -296,8 +360,11 @@
           const dateVal = dateInput.value;
           const slotVal = slotSelect.value;
           const partVal = document.getElementById("participants").value.trim();
+          const wetsuitText = needsWetsuit
+            ? `Oui (taille ${wetsuitSize})`
+            : "Non (équipement personnel)";
 
-          const tgMsg = `🌊 <b>NOUVELLE DEMANDE LONGE CÔTE !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()} ${isMember ? "⭐ (ADHÉRENT)" : ""}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à 10:00\n🏄‍♂️ <b>Places :</b> ${qty}x Longe Côte\n👥 <b>Participants :</b> ${partVal}`;
+          const tgMsg = `🌊 <b>NOUVELLE DEMANDE LONGE CÔTE !</b>\n\n👤 <b>Client :</b> ${prenom} ${nom.toUpperCase()} ${isMember ? "⭐ (ADHÉRENT)" : ""}\n📞 <b>Tél :</b> ${phoneVal}\n🗓️ <b>Date :</b> ${dateVal} à 10:00\n🏄‍♂️ <b>Places :</b> ${qty}x Longe Côte\n🩱 <b>Combinaison :</b> ${wetsuitText}\n👥 <b>Participants :</b> ${partVal}`;
           const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${encodeURIComponent(tgMsg)}&parse_mode=HTML`;
           new Image().src = url;
 
@@ -312,6 +379,8 @@
             status: "EN_ATTENTE",
             returned: false,
             isMember: isMember,
+            needsWetsuit: needsWetsuit,
+            wetsuitSize: wetsuitSize,
             items: { longe_cote: qty },
             totalPrice: totalPrice,
             createdAt: Date.now(),
