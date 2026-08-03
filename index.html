@@ -1758,6 +1758,7 @@
                   <div class="min-w-0">
                     <h4 class="font-black text-sm text-slate-800 truncate">${b.client}</h4>
                     <span class="text-[11px] text-slate-600">${b.items.longe_cote} place(s) • ${b.usersNames || ""}</span>
+                    ${b.needsWetsuit === true ? `<span class="text-[11px] font-bold text-cyan-800 block">🩱 Combi prêt — taille ${b.wetsuitSize || "?"}</span>` : ""}
                     ${b.phone ? `<a href="tel:${b.phone}" class="text-xs text-blue-600 font-bold block">📞 ${b.phone}</a>` : ""}
                   </div>
                   <span class="text-sm font-black text-slate-800 whitespace-nowrap">${b.totalPrice} €</span>
@@ -1795,6 +1796,7 @@
                 </div>
                 <div class="bg-cyan-50 p-2 rounded-xl text-xs space-y-1 border border-cyan-100">
                   <div class="font-bold text-cyan-900">🌊 ${b.items.longe_cote} place(s) de Longe Côte</div>
+                  ${typeof b.needsWetsuit === "boolean" ? `<div class="text-[11px] font-bold ${b.needsWetsuit ? "text-cyan-800" : "text-slate-500"}">🩱 Combinaison: ${b.needsWetsuit ? `prêt demandé — taille ${b.wetsuitSize || "?"}` : "non (équipement perso)"}</div>` : ""}
                   ${b.usersNames ? `<div class="text-[11px] text-slate-600">👥 ${b.usersNames}</div>` : ""}
                   ${b.emergency ? `<div class="text-[10px] text-red-600 font-bold">🚨 Urgence: ${b.emergency}</div>` : ""}
                   <div class="text-[10px] text-slate-500">👤 Prise en charge: <span class="font-bold text-cyan-700">${b.respNav || "N/A"}</span></div>
